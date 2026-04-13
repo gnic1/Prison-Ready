@@ -1,0 +1,41 @@
+import React, { useState } from 'react';
+import { View, Text, Button } from 'react-native';
+import { day1ReportBack } from '../../missions/data/day1.mission';
+import { ReportBackService } from '../../missions/services/reportBackService';
+import { SessionService } from '../../missions/services/sessionService';
+import { useNavigation } from '@react-navigation/native';
+
+export const ReportBackScreen = () => {
+  const navigation = useNavigation();
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const handleSelect = (optionId: string) => {
+    setSelected(optionId);
+  };
+
+  const handleSubmit = () => {
+    if (!selected) return;
+    ReportBackService.selectOption(selected);
+    SessionService.completeSession(
+      SessionService.getSession()?.artifactIdsEarned[0] || '',
+      selected,
+      'standard'
+    );
+    navigation.navigate('Artifacts');
+  };
+
+  return (
+    <View style={{ padding: 16 }}>
+      <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{day1ReportBack.prompt}</Text>
+      {day1ReportBack.options.map(opt => (
+        <Button
+          key={opt.id}
+          title={opt.label}
+          onPress={() => handleSelect(opt.id)}
+          color={selected === opt.id ? 'green' : undefined}
+        />
+      ))}
+      <Button title="Submit" onPress={handleSubmit} disabled={!selected} />
+    </View>
+  );
+};

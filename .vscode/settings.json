@@ -1,0 +1,14 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npm install": true,
+        "/^npm install @react-navigation/native@\\^6\\.1\\.7 @react-navigation/stack@\\^6\\.3\\.21 react-native-screens@~3\\.30\\.0 react-native-safe-area-context@4\\.8\\.2$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^npx expo start -c$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "npx expo": true
+    }
+}
