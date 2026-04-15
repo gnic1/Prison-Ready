@@ -1,0 +1,51 @@
+// Centralized theme config for Prison Ready
+export const themes = {
+  prison: {
+    key: 'prison',
+    label: 'Prison',
+    colors: {
+      background: '#181818',
+      card: '#232323',
+      accent: '#FF6A00',
+      accentGlow: '#FFB366',
+      gold: '#FFD700',
+      text: '#FFFFFF',
+      textSecondary: '#FFB366',
+      border: '#333',
+      streak: '#FF6A00',
+      streakGlow: '#FFD700',
+    },
+    labels: {
+      streak: 'Current Bid',
+      badge: 'Badge',
+      mission: 'Job',
+      progress: 'Progress',
+      health: 'Health Sync',
+    },
+    backgroundType: 'gradient',
+  },
+  mystery: {
+    key: 'mystery',
+    label: 'Mystery',
+    colors: {
+      background: '#10101A',
+      card: '#23233A',
+      accent: '#6A5AFF',
+      accentGlow: '#B3A6FF',
+      gold: '#FFD700',
+      text: '#FFFFFF',
+      textSecondary: '#B3A6FF',
+      border: '#333',
+      streak: '#6A5AFF',
+      streakGlow: '#FFD700',
+    },
+    labels: {
+      streak: 'Case Streak',
+      badge: 'Medal',
+      mission: 'Investigation',
+      progress: 'Progress',
+      health: 'Health Sync',
+    },
+    backgroundType: 'gradient',
+  },
+};
