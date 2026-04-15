@@ -23,4 +23,6 @@ export interface MissionSession {
     positions: { latitude: number; longitude: number; timestamp: number }[];
     totalDistance: number; // meters
   };
+  completionPercent?: number;
+  partialPoints?: number;
 }

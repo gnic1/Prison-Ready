@@ -30,6 +30,16 @@ export const SessionService = {
     session.outcomeBand = outcomeBand;
     if (recapEntry) session.recapEntry = recapEntry;
   },
+
+  // For incomplete/early-end missions
+  pauseSession(completionPercent: number, partialPoints: number) {
+    if (!session) return;
+    session.status = 'paused';
+    session.endedAt = new Date().toISOString();
+    session.completionResult = 'abandoned';
+    session.completionPercent = completionPercent;
+    session.partialPoints = partialPoints;
+  },
   getSession(): MissionSession | null {
     return session;
   },

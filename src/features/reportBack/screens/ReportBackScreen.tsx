@@ -11,6 +11,17 @@ export const ReportBackScreen = () => {
   const navigation = useNavigation();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const session = SessionService.getSession();
+
+  // Only allow Report Back if session is completed (not paused/abandoned)
+  if (!session || session.status !== 'completed') {
+    return (
+      <View style={{ padding: 16 }}>
+        <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#b77' }}>Mission incomplete or not available for Report Back.</Text>
+        <Button title="Back to Mission" onPress={() => navigation.navigate('MissionDay1')} />
+      </View>
+    );
+  }
 
   const handleSelect = (optionId: string) => {
     setSelected(optionId);
