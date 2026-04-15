@@ -37,7 +37,9 @@ export const HomeScreen = () => {
   const [prefs, setPrefs] = useState<UserPreferences>(defaultUserPreferences);
 
   const session = SessionService.getSession();
-  const missionProgress = Math.max(0.08, Math.min(1, (session?.completionPercent ?? 0) / 100));
+  const missionProgress = session?.completionPercent != null
+    ? Math.max(0.08, Math.min(1, session.completionPercent / 100))
+    : 0.62;
   const missionTargetXP = 1000;
   const missionCurrentXP = Math.round(missionProgress * missionTargetXP);
   const activeMission = {
@@ -45,8 +47,11 @@ export const HomeScreen = () => {
     progress: missionProgress,
     progressText: `${missionCurrentXP} / ${missionTargetXP} XP`,
   };
+  const percentComplete = Math.round(activeMission.progress * 100);
   const averageMissionMiles = (day1Mission.distanceMinMiles + day1Mission.distanceMaxMiles) / 2;
   const preferredDistance = UserPreferencesService.formatDistanceFromMiles(averageMissionMiles, prefs.distanceUnit);
+  const remainingMiles = Math.max(0, averageMissionMiles * (1 - activeMission.progress));
+  const remainingDistance = UserPreferencesService.formatDistanceFromMiles(remainingMiles, prefs.distanceUnit);
   const completedMissions = session?.status === 'completed' ? 1 : 0;
   const currentStreak = session?.status === 'completed' ? 1 : mockPlayer.streak;
   const stats = [
@@ -78,6 +83,10 @@ export const HomeScreen = () => {
         style={StyleSheet.absoluteFill}
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+        <View style={styles.statusBar}>
+          <Text style={styles.statusText}>09:41</Text>
+          <Text style={styles.statusText}>▲ GPS ▲▲▲ 100%</Text>
+        </View>
         {/* HERO SECTION */}
         {/* HERO CARD with background gradient */}
         <PrisonCard style={[styles.heroCard, { backgroundColor: 'rgba(20,23,29,0.95)', shadowColor: theme.colors.prisonOrange, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 }] }>
@@ -193,7 +202,7 @@ export const HomeScreen = () => {
             marginBottom: 2,
             textShadowColor: theme.colors.glowOrange,
             textShadowRadius: 8,
-          }}>ACTIVE MISSION</Text>
+          }}>⊙ ACTIVE MISSION</Text>
           <Text style={{
             fontSize: 22,
             fontWeight: '800',
@@ -226,6 +235,7 @@ export const HomeScreen = () => {
             textShadowColor: theme.colors.glowOrange,
             textShadowRadius: 8,
           }}>{activeMission.progressText}</Text>
+            <Text style={styles.missionSubline}>{`${percentComplete}% COMPLETE • ${remainingDistance} REMAINING`}</Text>
             <Text style={{
               fontSize: 12,
               fontWeight: '600',
@@ -255,6 +265,7 @@ export const HomeScreen = () => {
             />
         </PrisonCard>
 
+        <Text style={styles.weeklyLabel}>// WEEKLY ACTIVITY</Text>
         {/* WEEKLY STREAK ROW */}
         <View style={styles.streakRow}>
           {[...'MTWTFSS'].map((d, i) => {
@@ -361,6 +372,20 @@ export const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  statusBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: 'rgba(242,242,240,0.5)',
+    letterSpacing: 0.8,
+  },
   heroCard: {
     marginHorizontal: 16,
     marginTop: 18,
@@ -427,12 +452,31 @@ const styles = StyleSheet.create({
     marginTop: 14,
     alignSelf: 'stretch',
   },
+  missionSubline: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: '#888888',
+    letterSpacing: 0.8,
+    marginTop: 4,
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
   streakRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginHorizontal: 24,
     marginBottom: 18,
     marginTop: 2,
+  },
+  weeklyLabel: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+    color: '#888888',
+    marginHorizontal: 24,
+    marginTop: 2,
+    marginBottom: 8,
   },
   streakBox: {
     width: 32,

@@ -26,7 +26,7 @@ export const PrisonButton: React.FC<PrisonButtonProps> = ({ title, onPress, styl
       Animated.loop(
         Animated.timing(shimmerAnim, {
           toValue: 1,
-          duration: 1800,
+          duration: 2500,
           easing: Easing.linear,
           useNativeDriver: true,
         })
@@ -56,7 +56,7 @@ export const PrisonButton: React.FC<PrisonButtonProps> = ({ title, onPress, styl
                 {
                   translateX: shimmerAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [-280, 280],
+                    outputRange: [-320, 420],
                   }),
                 },
                 { rotate: '8deg' },
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -6,
     bottom: -6,
-    width: '36%',
+    width: '58%',
   },
   shimmerGradient: {
     flex: 1,

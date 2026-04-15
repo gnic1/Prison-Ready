@@ -3,10 +3,17 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { themes } from '../theme/themes';
 
 const TAB_ICONS: Record<string, string> = {
-  Home: '🏠',
-  Missions: '🎯',
-  Badges: '🏅',
-  Progress: '📈',
+  Home: '⌂',
+  Missions: '⊞',
+  Badges: '◈',
+  Progress: '◎',
+};
+
+const TAB_LABELS: Record<string, string> = {
+  Home: 'Base',
+  Missions: 'Missions',
+  Badges: 'Badges',
+  Progress: 'Map',
 };
 
 interface GameBottomNavProps {
@@ -43,13 +50,13 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
           >
             <Text
               style={{
-                fontSize: isActive ? 30 : 24,
+                fontSize: isActive ? 23 : 20,
                 color: isActive ? theme.colors.accent : theme.colors.textSecondary,
-                fontWeight: isActive ? 'bold' : 'normal',
+                fontWeight: isActive ? '700' : '500',
                 textShadowColor: isActive ? theme.colors.accentGlow : 'transparent',
                 textShadowRadius: isActive ? 16 : 0,
                 textShadowOffset: isActive ? { width: 0, height: 2 } : undefined,
-                marginBottom: 2,
+                marginBottom: 1,
               }}
             >
               {icon}
@@ -57,15 +64,17 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
             <Text
               style={{
                 color: isActive ? theme.colors.accent : theme.colors.textSecondary,
-                fontWeight: isActive ? 'bold' : 'normal',
-                fontSize: isActive ? 14 : 12,
+                fontWeight: isActive ? '700' : '500',
+                fontSize: isActive ? 9 : 8,
                 marginTop: 2,
                 textShadowColor: isActive ? theme.colors.accentGlow : 'transparent',
-                textShadowRadius: isActive ? 10 : 0,
-                letterSpacing: 1.2,
+                textShadowRadius: isActive ? 8 : 0,
+                letterSpacing: 1.4,
+                textTransform: 'uppercase',
+                fontFamily: 'monospace',
               }}
             >
-              {tabName}
+              {TAB_LABELS[tabName] || tabName}
             </Text>
           </TouchableOpacity>
         );
@@ -79,7 +88,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    height: 64,
+    height: 66,
     borderTopWidth: 0,
     borderTopColor: 'transparent',
     shadowColor: undefined,
@@ -92,7 +101,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   activeTab: {
     // Optionally add more visual cues for active tab

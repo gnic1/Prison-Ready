@@ -5,7 +5,7 @@ import HomeScreen from '../features/home/HomeScreen';
 import ProgressScreen from '../features/progress/ProgressScreen';
 import BadgesScreen from '../features/badges/BadgesScreen';
 import { GameBottomNav } from '../components/GameBottomNav';
-import { MissionDay1Screen } from '../features/missions/screens/MissionDay1Screen';
+import MissionDay1Screen from '../features/missions/screens/MissionDay1Screen';
 import MissionBriefScreen from '../features/missions/screens/MissionBriefScreen';
 import { ReportBackScreen } from '../features/reportBack/screens/ReportBackScreen';
 import { ArtifactsScreen } from '../features/artifacts/screens/ArtifactsScreen';
