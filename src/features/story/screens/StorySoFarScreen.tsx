@@ -3,7 +3,7 @@ import { View, Text, Button } from 'react-native';
 import { SessionService } from '../../missions/services/sessionService';
 import * as Speech from 'expo-speech';
 
-export const StorySoFarScreen = ({ navigation }: any) => {
+const StorySoFarScreen = ({ navigation }: any) => {
   const session = SessionService.getSession();
 
   if (!session || !session.recapEntry) {
@@ -29,3 +29,5 @@ export const StorySoFarScreen = ({ navigation }: any) => {
     </View>
   );
 };
+
+export default StorySoFarScreen;

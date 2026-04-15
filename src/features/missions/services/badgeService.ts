@@ -13,6 +13,7 @@ const BADGE_ID = 'jumping_in';
 const BADGE_NAME = 'Jumping In';
 
 // In-memory MVP state (replace with persistence later)
+
 let badge: BadgeProgress = {
   badgeId: BADGE_ID,
   badgeName: BADGE_NAME,
@@ -22,6 +23,16 @@ let badge: BadgeProgress = {
   totalCompletions: 0,
   lastUpdatedAt: new Date().toISOString(),
 };
+
+// Selected badge id (in-memory fallback)
+let selectedBadgeId: string | null = null;
+
+export function setSelectedBadgeIdMemory(badgeId: string) {
+  selectedBadgeId = badgeId;
+}
+export function getSelectedBadgeIdMemory(): string | null {
+  return selectedBadgeId;
+}
 
 export const BadgeService = {
   getBadge() {

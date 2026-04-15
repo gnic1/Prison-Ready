@@ -1,15 +1,32 @@
+
 import React, { useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Polyline, Marker, PROVIDER_GOOGLE, LatLng } from 'react-native-maps';
+
+type POI = {
+  coordinate: LatLng;
+  label: string;
+  icon?: string;
+};
+
+interface MissionMapProps {
+  path?: LatLng[];
+  pois?: POI[];
+  userLocation?: LatLng | null;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
+  loading?: boolean;
+  theme?: string;
+}
 
 const { width, height } = Dimensions.get('window');
 
-export const MissionMap = ({
+export const MissionMap: React.FC<MissionMapProps> = ({
   path = [],
   pois = [],
   userLocation = null,
   expanded = false,
-  onToggleExpand,
+  onToggleExpand = () => {},
   loading = false,
   theme = 'day',
 }) => {
@@ -49,7 +66,7 @@ export const MissionMap = ({
         {/* POI markers */}
         {pois.map((poi, idx) => (
           <Marker
-            key={idx}
+            key={`poi-${poi.label}-${idx}`}
             coordinate={poi.coordinate}
             title={poi.label}
             description={poi.label}

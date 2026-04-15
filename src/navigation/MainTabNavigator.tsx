@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../features/home/HomeScreen';
 import ProgressScreen from '../features/progress/ProgressScreen';
 import BadgesScreen from '../features/badges/BadgesScreen';
+import { GameBottomNav } from '../components/GameBottomNav';
 import { MissionDay1Screen } from '../features/missions/screens/MissionDay1Screen';
 import MissionBriefScreen from '../features/missions/screens/MissionBriefScreen';
 import { ReportBackScreen } from '../features/reportBack/screens/ReportBackScreen';
@@ -27,7 +28,18 @@ function MissionsStack() {
 
 export default function MainTabNavigator() {
   return (
-    <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{ headerShown: false }}
+      tabBar={({ state, navigation }) => (
+        <GameBottomNav
+          tabs={state.routeNames}
+          activeTab={state.routeNames[state.index]}
+          onTabPress={tab => navigation.navigate(tab as never)}
+          themeKey="prison"
+        />
+      )}
+    >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Missions" component={MissionsStack} />
       <Tab.Screen name="Progress" component={ProgressScreen} />

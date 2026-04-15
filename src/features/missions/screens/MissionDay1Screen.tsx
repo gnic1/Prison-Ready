@@ -7,7 +7,7 @@ let badgeJumpingInMasteryIcon: any = undefined;
 try { badgeJumpingInLevel2Icon = require('../../../../assets/icons/badge_jumping_in_level2.png'); } catch {}
 try { badgeJumpingInMasteryIcon = require('../../../../assets/icons/badge_jumping_in_mastery.png'); } catch {}
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, Alert, StyleSheet, Dimensions, Animated } from 'react-native';
+import { View, Text, ScrollView, Alert, StyleSheet, Dimensions, Animated, Platform, TextStyle } from 'react-native';
 import { PrisonButton } from '../../../components/PrisonButton';
 import { PrisonCard } from '../../../components/PrisonCard';
 import { ResultModule } from '../../../components/ResultModule';
@@ -24,6 +24,11 @@ import { GpsService } from '../services/gpsService';
 import * as Location from 'expo-location';
 import { RouteService } from '../services/routeService';
 import { useNavigation } from '@react-navigation/native';
+import {
+  defaultUserPreferences,
+  UserPreferences,
+  UserPreferencesService,
+} from '../services/userPreferencesService';
 
 const MIN_LENGTH = day1Mission.durationMin;
 const SUPPORTED_LENGTHS = [15, 20, 25, 30];
@@ -44,7 +49,7 @@ const POIS = [
   { label: 'Return', icon: '■' },
 ];
 
-export const MissionDay1Screen = () => {
+const MissionDay1Screen = () => {
   const navigation = useNavigation();
   // UI state
   const [screenStage, setScreenStage] = useState<'start' | 'length' | 'briefing' | 'active' | 'result'>(
@@ -64,13 +69,14 @@ export const MissionDay1Screen = () => {
   const [mapExpanded, setMapExpanded] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
+  const [prefs, setPrefs] = useState<UserPreferences>(defaultUserPreferences);
   // Animation state (for future polish)
   const [resultAnim] = useState(new Animated.Value(0));
   // MVP badge/xp state
   const [badge, setBadge] = useState(BadgeService.getBadge());
   const [xp, setXP] = useState(RewardService.getXP());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const gpsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gpsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gotFirstFix = useRef(false);
   const pacing = buildRoundTripPacing(workoutLength);
   const storyBeats = [
@@ -80,6 +86,13 @@ export const MissionDay1Screen = () => {
     'You are on your way back. Something feels off.',
     'Mission complete. Time to report back.'
   ];
+
+  useEffect(() => {
+    (async () => {
+      const stored = await UserPreferencesService.getPreferences();
+      setPrefs(stored);
+    })();
+  }, []);
 
   useEffect(() => {
     if (!missionActive) return;
@@ -104,7 +117,14 @@ export const MissionDay1Screen = () => {
       if (status !== 'granted') {
         setMapLoading(false);
         setGpsStatus('Permission Denied');
-        Alert.alert('Location permission not granted');
+        Alert.alert(
+          'Location permission not granted',
+          '',
+          [
+            { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
+          ],
+          { cancelable: true }
+        );
         return;
       }
       subscription = await Location.watchPositionAsync(
@@ -183,11 +203,25 @@ export const MissionDay1Screen = () => {
           GpsService.stopTracking();
           setMissionActive(false);
           setGpsStatus('Error');
-          Alert.alert('Location Error', 'Could not get your location. Please ensure location services are enabled and try again.');
+          Alert.alert(
+            'Location Error',
+            'Could not get your location. Please ensure location services are enabled and try again.',
+            [
+              { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
+            ],
+            { cancelable: true }
+          );
         }
       }, 10000);
     } catch (e: any) {
-      Alert.alert('Location Error', e.message || 'Could not start GPS tracking.');
+      Alert.alert(
+        'Location Error',
+        e.message || 'Could not start GPS tracking.',
+        [
+          { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
+        ],
+        { cancelable: true }
+      );
       setMissionActive(false);
       setGpsStatus('Error');
       return;
@@ -249,16 +283,16 @@ export const MissionDay1Screen = () => {
     <ScrollView style={styles.container}>
       {/* Start Screen */}
       {screenStage === 'start' && (
-        <PrisonCard style={{ alignItems: 'center', marginTop: 32 }}>
-          <Text style={[typography.headline, { color: colors.prisonOrange }]}>Day 1: {day1Mission.title}</Text>
-          <Text style={[typography.body, { marginVertical: 12, color: colors.textSecondary }]}>Ready to begin your mission?</Text>
-          <PrisonButton title="Start Mission" onPress={handleStartMission} />
+        <PrisonCard style={{ alignItems: 'center', marginTop: 32, backgroundColor: 'rgba(24,24,28,0.98)', borderRadius: 20, shadowColor: colors.prisonOrange, shadowOpacity: 0.12, shadowRadius: 16, elevation: 8 }}>
+          <Text style={{ fontSize: 30, fontWeight: "bold", letterSpacing: 1.2, textTransform: "uppercase", color: colors.prisonOrange }}>Day 1: {day1Mission.title}</Text>
+          <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, marginVertical: 12, color: colors.textSecondary }}>Ready to begin your mission?</Text>
+          <PrisonButton title="Start Mission" onPress={handleStartMission} shimmer />
         </PrisonCard>
       )}
       {/* Mission Length Selection */}
       {screenStage === 'length' && (
-        <PrisonCard style={{ alignItems: 'center', marginTop: 32 }}>
-          <Text style={[typography.subhead, { color: colors.prisonOrange }]}>Select Mission Length</Text>
+        <PrisonCard style={{ alignItems: 'center', marginTop: 32, backgroundColor: 'rgba(24,24,28,0.98)', borderRadius: 20, shadowColor: colors.prisonOrange, shadowOpacity: 0.12, shadowRadius: 16, elevation: 8 }}>
+          <Text style={{ fontSize: 20, fontWeight: "bold", letterSpacing: 0.5, textTransform: 'uppercase', color: colors.prisonOrange }}>Select Mission Length</Text>
           <View style={{ flexDirection: 'row', marginVertical: 16 }}>
             {SUPPORTED_LENGTHS.map(len => (
               <PrisonButton
@@ -275,26 +309,28 @@ export const MissionDay1Screen = () => {
               />
             ))}
           </View>
-          <PrisonButton title="Confirm & Begin" onPress={handleLengthConfirm} />
+          <PrisonButton title="Confirm & Begin" onPress={handleLengthConfirm} shimmer />
         </PrisonCard>
       )}
       {/* Briefing/Transition */}
       {screenStage === 'briefing' && (
         <PrisonCard style={{ alignItems: 'center', marginTop: 32, backgroundColor: colors.prisonOrange }}>
-          <Text style={[typography.headline, { color: colors.white }]}>Mission Briefing</Text>
-          <Text style={[typography.body, { color: colors.white, marginVertical: 12 }]}>Get ready! Your mission is about to begin...</Text>
+            <Text style={{ fontSize: 30, fontWeight: "bold", letterSpacing: 1.2, textTransform: 'uppercase', color: colors.white }}>Mission Briefing</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, color: colors.white, marginVertical: 12 }}>Get ready! Your mission is about to begin...</Text>
         </PrisonCard>
       )}
       {/* Mission Active */}
       {screenStage === 'active' && (
         <>
           <PrisonCard style={{ marginTop: 16 }}>
-            <Text style={[typography.subhead, { color: colors.prisonOrange }]}>Status: {missionActive ? 'Active' : 'Not Started'}</Text>
-            <Text style={typography.body}>Elapsed: {elapsed} min / {workoutLength} min</Text>
-            <Text style={typography.body}>Phase: {phase}</Text>
-            <Text style={typography.body}>Distance: {distance} m</Text>
-            <Text style={typography.body}>GPS: {gpsStatus}</Text>
-            <Text style={typography.body}>Current Objective: {storyBeats[storyIdx]}</Text>
+            <Text style={{ fontSize: 20, fontWeight: "bold", letterSpacing: 0.5, textTransform: 'uppercase', color: colors.prisonOrange }}>Status: {missionActive ? 'Active' : 'Not Started'}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Elapsed: {elapsed} min / {workoutLength} min</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Phase: {phase}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Distance: {UserPreferencesService.formatDistanceFromMeters(distance, prefs.distanceUnit)}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Mode: {prefs.missionMode === 'treadmill' ? 'Treadmill/Walking Pad' : 'Outside Route'}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Goal Type: {prefs.goalType === 'distance' ? 'Distance' : 'Time'}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>GPS: {gpsStatus}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Current Objective: {storyBeats[storyIdx]}</Text>
           </PrisonCard>
           <MissionMap
             path={path}
@@ -319,14 +355,14 @@ export const MissionDay1Screen = () => {
             icon={missionEndedEarly ? missionIncompleteIcon : missionCompleteIcon}
             statusColor={missionEndedEarly ? colors.incomplete : colors.complete}
           >
-            <Text style={[typography.body, { color: colors.text, marginVertical: 8 }]}>Completion: {completionPercent}%</Text>
+            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, color: colors.text, marginVertical: 8 }}>Completion: {completionPercent}%</Text>
             {missionEndedEarly ? (
-              <Text style={[typography.body, { color: colors.incomplete, marginVertical: 8 }]}>Workout logged. Mission incomplete. Your mission will resume next time.</Text>
+              <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, color: colors.incomplete, marginVertical: 8 }}>Workout logged. Mission incomplete. Your mission will resume next time.</Text>
             ) : (
-              <Text style={[typography.body, { color: colors.complete, marginVertical: 8 }]}>Great job! You completed your mission.</Text>
+              <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, color: colors.complete, marginVertical: 8 }}>Great job! You completed your mission.</Text>
             )}
             {partialPoints > 0 && missionEndedEarly && (
-              <Text style={[typography.body, { color: colors.xp }]}>Partial points awarded: {partialPoints}</Text>
+              <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1, color: colors.xp }}>Partial points awarded: {partialPoints}</Text>
             )}
             {/* XP Reward and Badge Progression (only for complete) */}
             {!missionEndedEarly && (
@@ -342,13 +378,15 @@ export const MissionDay1Screen = () => {
                 />
               </>
             )}
-            <PrisonButton title="Continue" onPress={() => navigation.navigate('ReportBack')} style={{ marginTop: 16 }} />
+            <PrisonButton title="Continue" onPress={() => navigation.navigate && navigation.navigate('ReportBack' as never)} style={{ marginTop: 16 }} />
           </ResultModule>
         </Animated.View>
       )}
     </ScrollView>
   );
 };
+
+export default MissionDay1Screen;
 
 const styles = StyleSheet.create({
   container: { padding: 16, backgroundColor: colors.slate, minHeight: Dimensions.get('window').height },

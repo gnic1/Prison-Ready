@@ -1,28 +1,61 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { themes } from '../../theme/themes';
 
-const mockBadges = [
-  { name: 'Repeat Offender', desc: 'Complete 5 missions', icon: '🏅', streak: true },
-  { name: 'First Steps', desc: 'Complete your first mission', icon: '🥇', streak: false },
-];
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { themes } from '../../theme/themes';
+import { BadgeService, setSelectedBadgeIdMemory } from '../missions/services/badgeService';
+import { setSelectedBadgeId, getSelectedBadgeId } from '../missions/services/badgeSelectionStorage';
+import badgeJumpingInIcon from '../../../assets/icons/badge_jumping_in.png';
 
 export default function BadgesScreen() {
   const theme = themes.prison;
+  // For now, only show the MVP badge from BadgeService
+  const badge = BadgeService.getBadge();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const stored = await getSelectedBadgeId();
+      setSelectedId(stored || badge.badgeId);
+    })();
+  }, []);
+
+  const handleSelect = async (badgeId: string) => {
+    setSelectedId(badgeId);
+    setSelectedBadgeIdMemory(badgeId);
+    await setSelectedBadgeId(badgeId);
+  };
+
+  // Only one badge for now, but structure for future
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }] }>
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <Text style={[styles.title, { color: theme.colors.accent }]}>Badges</Text>
-        {mockBadges.map(badge => (
-          <View key={badge.name} style={[styles.card, { backgroundColor: theme.colors.card, borderColor: badge.streak ? theme.colors.streak : theme.colors.accent }] }>
-            <Text style={styles.icon}>{badge.icon}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.badgeName, { color: theme.colors.text }]}>{badge.name}</Text>
-              <Text style={[styles.badgeDesc, { color: theme.colors.textSecondary }]}>{badge.desc}</Text>
-            </View>
-            {badge.streak && <Text style={{ color: theme.colors.streakGlow, fontWeight: 'bold' }}>Streak</Text>}
+        <View
+          key={`badge-${badge.badgeId}`}
+          style={[
+            styles.card,
+            { backgroundColor: theme.colors.card, borderColor: selectedId === badge.badgeId ? theme.colors.gold : theme.colors.streak },
+            selectedId === badge.badgeId && { shadowColor: theme.colors.gold, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+          ]}
+        >
+          <Image source={badgeJumpingInIcon} style={styles.iconImg} resizeMode="contain" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.badgeName, { color: theme.colors.text }]}>{badge.badgeName}</Text>
+            <Text style={[styles.badgeDesc, { color: theme.colors.textSecondary }]}>Complete your first mission</Text>
           </View>
-        ))}
+          {badge.mastered && <Text style={{ color: theme.colors.gold, fontWeight: 'bold' }}>Mastered</Text>}
+          <Text
+            style={{
+              color: selectedId === badge.badgeId ? theme.colors.gold : theme.colors.textSecondary,
+              fontWeight: selectedId === badge.badgeId ? 'bold' : 'normal',
+              marginLeft: 8,
+              fontSize: 13,
+            }}
+            onPress={() => handleSelect(badge.badgeId)}
+          >
+            {selectedId === badge.badgeId ? 'Selected' : 'Select'}
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -44,6 +77,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   icon: { fontSize: 32, marginRight: 16 },
+  iconImg: { width: 40, height: 40, marginRight: 16 },
   badgeName: { fontSize: 16, fontWeight: 'bold' },
   badgeDesc: { fontSize: 13, marginTop: 2 },
 });

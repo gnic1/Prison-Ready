@@ -5,7 +5,7 @@ import { ArtifactService } from '../../missions/services/artifactService';
 import { day1Artifact } from '../../missions/data/day1.mission';
 import { SessionService } from '../../missions/services/sessionService';
 
-export const ArtifactsScreen = () => {
+const ArtifactsScreen = () => {
   const artifacts = ArtifactService.getPlayerArtifacts();
   const earned = artifacts.find(a => a.artifactId === day1Artifact.id);
   const session = SessionService.getSession();
@@ -32,3 +32,5 @@ export const ArtifactsScreen = () => {
     </View>
   );
 };
+
+export default ArtifactsScreen;
