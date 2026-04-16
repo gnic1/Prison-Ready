@@ -5,6 +5,7 @@ import { themes } from '../../theme/themes';
 import { BadgeService, setSelectedBadgeIdMemory } from '../missions/services/badgeService';
 import { setSelectedBadgeId, getSelectedBadgeId } from '../missions/services/badgeSelectionStorage';
 import badgeJumpingInIcon from '../../../assets/icons/badge_jumping_in.png';
+import { TacticalMarquee } from '../../components/TacticalMarquee';
 
 export default function BadgesScreen() {
   const theme = themes.prison;
@@ -29,6 +30,11 @@ export default function BadgesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }] }>
       <ScrollView contentContainerStyle={{ padding: 24 }}>
+        <TacticalMarquee
+          items={['BADGE RECORD // ACTIVE', 'SELECTED BADGE SYNCED', 'HQ STATUS: MONITORING']}
+          tone="teal"
+          style={styles.topBanner}
+        />
         <Text style={[styles.title, { color: theme.colors.accent }]}>Badges</Text>
         <View
           key={`badge-${badge.badgeId}`}
@@ -50,6 +56,12 @@ export default function BadgesScreen() {
               fontWeight: selectedId === badge.badgeId ? 'bold' : 'normal',
               marginLeft: 8,
               fontSize: 13,
+              borderWidth: 1,
+              borderColor: selectedId === badge.badgeId ? 'rgba(255,211,106,0.5)' : 'rgba(255,255,255,0.16)',
+              paddingVertical: 6,
+              paddingHorizontal: 10,
+              borderRadius: 9,
+              overflow: 'hidden',
             }}
             onPress={() => handleSelect(badge.badgeId)}
           >
@@ -63,18 +75,21 @@ export default function BadgesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  topBanner: {
+    marginBottom: 12,
+  },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 2,
+    borderRadius: 16,
+    borderWidth: 1,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
   },
   icon: { fontSize: 32, marginRight: 16 },
   iconImg: { width: 40, height: 40, marginRight: 16 },

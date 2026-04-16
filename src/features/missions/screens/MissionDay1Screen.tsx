@@ -24,6 +24,7 @@ import { GpsService } from '../services/gpsService';
 import * as Location from 'expo-location';
 import { RouteService } from '../services/routeService';
 import { useNavigation } from '@react-navigation/native';
+import { TacticalMarquee } from '../../../components/TacticalMarquee';
 import {
   defaultUserPreferences,
   UserPreferences,
@@ -365,6 +366,13 @@ const MissionDay1Screen = () => {
   const metricPrimaryLabel = isTreadmillMode ? 'Route' : 'Distance';
   const metricTertiaryValue = isTreadmillMode ? goalLabel : paceLabel;
   const metricTertiaryLabel = isTreadmillMode ? 'Goal' : 'Pace/km';
+  const bannerItems = [
+    'LIVE MISSION // DAY-01',
+    isTreadmillMode ? 'SIMULATED ROUTE ACTIVE' : 'GPS LOCKED',
+    `${phase.toUpperCase()} PHASE`,
+    prefs.goalType === 'distance' ? 'DISTANCE GOAL ENABLED' : 'TIME GOAL ENABLED',
+    mapStatusLabel,
+  ];
   const animatedStatusHeight = statusCardHeight > 0
     ? statusCardAnim.interpolate({
         inputRange: [0, 1],
@@ -454,6 +462,7 @@ const MissionDay1Screen = () => {
       {/* Mission Active */}
       {screenStage === 'active' && (
         <>
+          <TacticalMarquee items={bannerItems} tone="orange" style={styles.topBanner} />
           <View style={styles.activeHero}>
             <Text style={styles.heroTag}>// Live Mission · Day-01</Text>
             <Text style={styles.heroTitle}>{day1Mission.title}</Text>
@@ -602,6 +611,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 16,
     elevation: 8,
+  },
+  topBanner: {
+    marginTop: 10,
+    marginHorizontal: 2,
+    marginBottom: 8,
   },
   heroTag: {
     ...typography.monoLabel,

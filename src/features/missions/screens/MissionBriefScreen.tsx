@@ -4,6 +4,7 @@ import { themes } from '../../../theme/themes';
 import { typography } from '../../../theme/typography';
 import { PrisonCard } from '../../../components/PrisonCard';
 import { PrisonButton } from '../../../components/PrisonButton';
+import { TacticalMarquee } from '../../../components/TacticalMarquee';
 import { useNavigation } from '@react-navigation/native';
 import {
   UserPreferencesService,
@@ -62,6 +63,13 @@ export const MissionBriefScreen = () => {
     UserPreferencesService.updatePreferences({ missionMode: next });
   };
 
+  const bannerItems = [
+    'MISSION BRIEF // DAY-01',
+    missionMode === 'treadmill' ? 'SIMULATED ROUTE ACTIVE' : 'GPS ROUTE MODE',
+    goalType === 'distance' ? 'DISTANCE GOAL ENABLED' : 'TIME GOAL ENABLED',
+    'HQ STATUS: MONITORING',
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }] }>
       {/* HEADER ROW */}
@@ -97,6 +105,8 @@ export const MissionBriefScreen = () => {
           textAlign: 'right',
         }}>{mission.id}</Text>
       </View>
+
+      <TacticalMarquee items={bannerItems} tone="orange" style={styles.topBanner} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* HERO MISSION COVER PANEL */}
@@ -223,6 +233,10 @@ const styles = StyleSheet.create({
     padding: 4,
     minWidth: 32,
     alignItems: 'flex-start',
+  },
+  topBanner: {
+    marginHorizontal: 14,
+    marginBottom: 8,
   },
   heroCard: {
     marginHorizontal: 14,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { themes } from '../theme/themes';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const TAB_ICONS: Record<string, string> = {
   Home: '⌂',
@@ -39,6 +40,13 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
         },
       ]}
     >
+      <LinearGradient
+        colors={['rgba(7,10,14,0.96)', 'rgba(12,18,24,0.96)', 'rgba(7,10,14,0.98)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.topRule} />
       {tabs.map(tabName => {
         const isActive = activeTab === tabName;
         const icon = TAB_ICONS[tabName] || '•';
@@ -48,6 +56,7 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
             style={[styles.tab, isActive && styles.activeTab]}
             onPress={() => onTabPress(tabName)}
           >
+            {isActive ? <View style={styles.activeUnderline} /> : null}
             <Text
               style={{
                 fontSize: isActive ? 23 : 20,
@@ -97,13 +106,30 @@ const styles = StyleSheet.create({
     shadowRadius: undefined,
     elevation: 0,
   },
+  topRule: {
+    position: 'absolute',
+    top: 0,
+    left: 14,
+    right: 14,
+    height: 1,
+    backgroundColor: 'rgba(0,200,160,0.16)',
+  },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 7,
+    position: 'relative',
   },
   activeTab: {
     // Optionally add more visual cues for active tab
+  },
+  activeUnderline: {
+    position: 'absolute',
+    top: 0,
+    width: 28,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: '#FF6A00',
   },
 });

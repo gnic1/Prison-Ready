@@ -4,6 +4,7 @@ import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, Animated, Eas
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { tactical } from '../theme/tactical';
 
 
 interface PrisonButtonProps {
@@ -36,11 +37,18 @@ export const PrisonButton: React.FC<PrisonButtonProps> = ({ title, onPress, styl
 
   return (
     <TouchableOpacity
-      style={[styles.button, style, disabled && styles.disabled]}
+      style={[styles.button, disabled && styles.disabled, style]}
       onPress={onPress}
       activeOpacity={0.85}
       disabled={disabled}
     >
+      <LinearGradient
+        colors={disabled ? ['#2A2D34', '#24272E'] : tactical.gradient.cta}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.topEdge} />
       <View style={styles.contentRow}>
         {icon ? <Text style={[styles.icon, textStyle]}>{icon}</Text> : null}
         <Text style={[styles.text, textStyle]}>{title.toUpperCase()}</Text>
@@ -78,27 +86,34 @@ export const PrisonButton: React.FC<PrisonButtonProps> = ({ title, onPress, styl
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.prisonOrange,
-    borderRadius: 20,
+    borderRadius: tactical.radius.lg,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
     marginVertical: 8,
-    shadowColor: colors.glowOrange,
+    shadowColor: colors.prisonOrange,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
+    shadowOpacity: 0.34,
+    shadowRadius: 14,
     elevation: 8,
-    borderWidth: 0,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,186,120,0.35)',
     overflow: 'hidden',
+  },
+  topEdge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255,236,208,0.45)',
   },
   text: {
     ...typography.button,
     color: colors.text,
-    textShadowColor: colors.glowOrange,
+    textShadowColor: 'rgba(85,30,0,0.35)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    textShadowRadius: 4,
     fontWeight: 'bold',
   },
   icon: {
@@ -123,7 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   disabled: {
-    backgroundColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.14)',
     opacity: 0.6,
   },
 });

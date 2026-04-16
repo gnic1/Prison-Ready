@@ -16,6 +16,7 @@ import {
   UserPreferences,
   UserPreferencesService,
 } from '../missions/services/userPreferencesService';
+import { TacticalMarquee } from '../../components/TacticalMarquee';
 
 // Map badge IDs to their image assets
 const badgeIdToImage: Record<string, any> = {
@@ -61,6 +62,13 @@ export const HomeScreen = () => {
   ];
   const week = [true, true, true, false, false, false, false]; // Example: first 3 days complete
   const todayIdx = 2;
+  const bannerItems = [
+    'LIVE MISSION // DAY-01',
+    prefs.missionMode === 'treadmill' ? 'SIMULATED ROUTE ACTIVE' : 'GPS LOCKED',
+    prefs.goalType === 'distance' ? 'DISTANCE GOAL ENABLED' : 'TIME GOAL ENABLED',
+    'HQ STATUS: MONITORING',
+    'ROUTE TRACE ONLINE',
+  ];
 
   useFocusEffect(React.useCallback(() => {
     (async () => {
@@ -87,6 +95,7 @@ export const HomeScreen = () => {
           <Text style={styles.statusText}>09:41</Text>
           <Text style={styles.statusText}>▲ GPS ▲▲▲ 100%</Text>
         </View>
+        <TacticalMarquee items={bannerItems} tone="teal" style={styles.topBanner} />
         {/* HERO SECTION */}
         {/* HERO CARD with background gradient */}
         <PrisonCard style={[styles.heroCard, { backgroundColor: 'rgba(20,23,29,0.95)', shadowColor: theme.colors.prisonOrange, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 }] }>
@@ -385,6 +394,10 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     color: 'rgba(242,242,240,0.5)',
     letterSpacing: 0.8,
+  },
+  topBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
   heroCard: {
     marginHorizontal: 16,
