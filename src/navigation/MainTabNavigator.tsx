@@ -8,8 +8,8 @@ import { GameBottomNav } from '../components/GameBottomNav';
 import MissionDay1Screen from '../features/missions/screens/MissionDay1Screen';
 import MissionBriefScreen from '../features/missions/screens/MissionBriefScreen';
 import { ReportBackScreen } from '../features/reportBack/screens/ReportBackScreen';
-import { ArtifactsScreen } from '../features/artifacts/screens/ArtifactsScreen';
-import { StorySoFarScreen } from '../features/story/screens/StorySoFarScreen';
+import ArtifactsScreen from '../features/artifacts/screens/ArtifactsScreen';
+import StorySoFarScreen from '../features/story/screens/StorySoFarScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

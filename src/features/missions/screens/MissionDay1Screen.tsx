@@ -7,7 +7,7 @@ let badgeJumpingInMasteryIcon: any = undefined;
 try { badgeJumpingInLevel2Icon = require('../../../../assets/icons/badge_jumping_in_level2.png'); } catch {}
 try { badgeJumpingInMasteryIcon = require('../../../../assets/icons/badge_jumping_in_mastery.png'); } catch {}
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, Alert, StyleSheet, Dimensions, Animated, Platform, TextStyle } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, Animated } from 'react-native';
 import { PrisonButton } from '../../../components/PrisonButton';
 import { PrisonCard } from '../../../components/PrisonCard';
 import { ResultModule } from '../../../components/ResultModule';
@@ -34,13 +34,13 @@ const MIN_LENGTH = day1Mission.durationMin;
 const SUPPORTED_LENGTHS = [15, 20, 25, 30];
 
 function buildRoundTripPacing(duration: number) {
-  // Outbound: 40%, Turn: 20%, Return: 40%
+  const durationSeconds = duration * 60;
   return [
     { label: 'Start', time: 0 },
-    { label: 'Outbound', time: Math.round(duration * 0.4) },
-    { label: 'Turnaround', time: Math.round(duration * 0.5) },
-    { label: 'Return', time: Math.round(duration * 0.9) },
-    { label: 'Complete', time: duration },
+    { label: 'Outbound', time: Math.round(durationSeconds * 0.4) },
+    { label: 'Turnaround', time: Math.round(durationSeconds * 0.5) },
+    { label: 'Return', time: Math.round(durationSeconds * 0.9) },
+    { label: 'Complete', time: durationSeconds },
   ];
 }
 
@@ -48,6 +48,14 @@ const POIS = [
   { label: 'Turnaround', icon: '◆' },
   { label: 'Return', icon: '■' },
 ];
+
+function formatElapsed(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+type NoticeTone = 'warning' | 'danger' | 'info';
 
 const MissionDay1Screen = () => {
   const navigation = useNavigation();
@@ -70,6 +78,7 @@ const MissionDay1Screen = () => {
   const [mapLoading, setMapLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
   const [prefs, setPrefs] = useState<UserPreferences>(defaultUserPreferences);
+  const [notice, setNotice] = useState<{ title: string; message: string; tone: NoticeTone } | null>(null);
   // Animation state (for future polish)
   const [resultAnim] = useState(new Animated.Value(0));
   // MVP badge/xp state
@@ -77,7 +86,11 @@ const MissionDay1Screen = () => {
   const [xp, setXP] = useState(RewardService.getXP());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gpsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gotFirstFix = useRef(false);
+  const statusCardAnim = useRef(new Animated.Value(0)).current;
+  const mapFocusAnim = useRef(new Animated.Value(0)).current;
+  const [statusCardHeight, setStatusCardHeight] = useState(0);
   const pacing = buildRoundTripPacing(workoutLength);
   const storyBeats = [
     'You begin your familiar route.',
@@ -86,6 +99,20 @@ const MissionDay1Screen = () => {
     'You are on your way back. Something feels off.',
     'Mission complete. Time to report back.'
   ];
+  const targetDistanceMeters = Math.round(((day1Mission.distanceMinMiles + day1Mission.distanceMaxMiles) / 2) * 1609.34);
+  const isTreadmillMode = prefs.missionMode === 'treadmill';
+
+  function buildSimulatedPath() {
+    return [
+      { latitude: 37.78825, longitude: -122.4324 },
+      { latitude: 37.78945, longitude: -122.4309 },
+      { latitude: 37.7901, longitude: -122.4294 },
+      { latitude: 37.7892, longitude: -122.4282 },
+      { latitude: 37.7877, longitude: -122.4293 },
+      { latitude: 37.7869, longitude: -122.4312 },
+      { latitude: 37.78825, longitude: -122.4324 },
+    ];
+  }
 
   useEffect(() => {
     (async () => {
@@ -98,16 +125,49 @@ const MissionDay1Screen = () => {
     if (!missionActive) return;
     timerRef.current = setInterval(() => {
       setElapsed(e => e + 1);
-    }, 1000 * 60); // 1 minute
+    }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [missionActive]);
 
-  // Track user location for map (but only after mission start)
+  useEffect(() => {
+    if (screenStage !== 'active') {
+      statusCardAnim.stopAnimation();
+      mapFocusAnim.stopAnimation();
+      statusCardAnim.setValue(0);
+      mapFocusAnim.setValue(0);
+      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+      return;
+    }
+
+    statusCardAnim.setValue(0);
+    mapFocusAnim.setValue(0);
+    if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+    collapseTimerRef.current = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(statusCardAnim, {
+          toValue: 1,
+          duration: 480,
+          useNativeDriver: false,
+        }),
+        Animated.timing(mapFocusAnim, {
+          toValue: 1,
+          duration: 540,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }, 3000);
+
+    return () => {
+      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+    };
+  }, [screenStage, statusCardAnim, mapFocusAnim]);
+
+  // Track user location only for outside mode.
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
     let cancelled = false;
     async function startLocationWatch() {
-      if (!missionActive) {
+      if (!missionActive || isTreadmillMode) {
         setUserLocation(null);
         return;
       }
@@ -117,14 +177,11 @@ const MissionDay1Screen = () => {
       if (status !== 'granted') {
         setMapLoading(false);
         setGpsStatus('Permission Denied');
-        Alert.alert(
-          'Location permission not granted',
-          '',
-          [
-            { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
-          ],
-          { cancelable: true }
-        );
+        setNotice({
+          title: 'Location Permission Needed',
+          message: 'Enable location permissions for outside route mode, or switch to treadmill/walking pad.',
+          tone: 'warning',
+        });
         return;
       }
       subscription = await Location.watchPositionAsync(
@@ -136,12 +193,12 @@ const MissionDay1Screen = () => {
         }
       );
     }
-    if (missionActive) startLocationWatch();
+    if (missionActive && !isTreadmillMode) startLocationWatch();
     return () => {
       cancelled = true;
       if (subscription) subscription.remove();
     };
-  }, [missionActive]);
+  }, [missionActive, isTreadmillMode]);
 
   useEffect(() => {
     if (!missionActive) return;
@@ -154,10 +211,11 @@ const MissionDay1Screen = () => {
       }
     }
     // Update completion percent
-    const percent = Math.min(100, Math.round((elapsed / workoutLength) * 100));
+    const totalSeconds = workoutLength * 60;
+    const percent = Math.min(100, Math.round((elapsed / totalSeconds) * 100));
     setCompletionPercent(percent);
     // End mission if time is up
-    if (elapsed >= workoutLength) {
+    if (elapsed >= totalSeconds) {
       handleCompleteMission();
     }
   }, [elapsed, missionActive, workoutLength]);
@@ -174,8 +232,13 @@ const MissionDay1Screen = () => {
   };
 
   const startMissionActive = async () => {
+    setNotice(null);
     if (workoutLength < MIN_LENGTH) {
-      Alert.alert('Workout Too Short', `Minimum mission length is ${MIN_LENGTH} minutes. Please select a longer workout.`);
+      setNotice({
+        title: 'Workout Too Short',
+        message: `Minimum mission length is ${MIN_LENGTH} minutes. Please select a longer workout.`,
+        tone: 'warning',
+      });
       setScreenStage('length');
       return;
     }
@@ -185,9 +248,18 @@ const MissionDay1Screen = () => {
     setStoryIdx(0);
     setDistance(0);
     setPath([]);
-    setGpsStatus('Starting...');
+    setGpsStatus(isTreadmillMode ? 'Simulated' : 'Starting...');
     gotFirstFix.current = false;
     const session = SessionService.startSession(day1Mission.id, day1Mission.routeId, workoutLength, pacing.map(p => p.time));
+
+    if (isTreadmillMode) {
+      const simulatedPath = buildSimulatedPath();
+      setPath(simulatedPath);
+      setUserLocation(simulatedPath[0]);
+      setMapLoading(false);
+      return;
+    }
+
     try {
       await GpsService.startTracking(state => {
         setDistance(Math.round(state.totalDistance));
@@ -203,25 +275,19 @@ const MissionDay1Screen = () => {
           GpsService.stopTracking();
           setMissionActive(false);
           setGpsStatus('Error');
-          Alert.alert(
-            'Location Error',
-            'Could not get your location. Please ensure location services are enabled and try again.',
-            [
-              { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
-            ],
-            { cancelable: true }
-          );
+          setNotice({
+            title: 'Location Error',
+            message: 'Could not get your location. Ensure location services are enabled or switch to treadmill/walking pad mode.',
+            tone: 'danger',
+          });
         }
       }, 10000);
     } catch (e: any) {
-      Alert.alert(
-        'Location Error',
-        e.message || 'Could not start GPS tracking.',
-        [
-          { text: 'OK', style: Platform.OS === 'ios' ? 'default' : 'default' }
-        ],
-        { cancelable: true }
-      );
+      setNotice({
+        title: 'Location Error',
+        message: e?.message || 'Could not start GPS tracking. Please retry or switch to treadmill mode.',
+        tone: 'danger',
+      });
       setMissionActive(false);
       setGpsStatus('Error');
       return;
@@ -230,10 +296,12 @@ const MissionDay1Screen = () => {
 
   // Called when user completes or ends mission
   const handleCompleteMission = (early: boolean = false) => {
-    GpsService.stopTracking();
+    if (!isTreadmillMode) {
+      GpsService.stopTracking();
+    }
     setMissionActive(false);
     setGpsStatus('Idle');
-    let percent = Math.min(100, Math.round((elapsed / workoutLength) * 100));
+    let percent = Math.min(100, Math.round((elapsed / (workoutLength * 60)) * 100));
     setCompletionPercent(percent);
     // Save route as routine if meaningful
     if (path.length > 1) {
@@ -278,9 +346,73 @@ const MissionDay1Screen = () => {
     Animated.timing(resultAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   };
 
+  const formattedDistance = UserPreferencesService.formatDistanceFromMeters(distance, prefs.distanceUnit);
+  const elapsedLabel = formatElapsed(elapsed);
+  const goalLabel = formatElapsed(workoutLength * 60);
+  const routeProgressLabel = `${completionPercent}%`;
+  const routeRemainingLabel = `${Math.max(0, 100 - completionPercent)}% route left`;
+  const distanceKm = distance / 1000;
+  const elapsedMinutes = elapsed / 60;
+  const paceMinPerKm = distanceKm > 0 ? elapsedMinutes / distanceKm : 0;
+  const paceMins = Math.floor(paceMinPerKm);
+  const paceSecs = Math.floor((paceMinPerKm - paceMins) * 60);
+  const paceLabel = distanceKm > 0 ? `${String(paceMins).padStart(2, '0')}:${String(paceSecs).padStart(2, '0')}` : '--:--';
+  const objectiveDirection = phase === 'Return' ? 'Bear left · Return route' : 'Bear right · Oak Street';
+  const objectiveName = phase === 'Return' ? 'Return Checkpoint' : 'Outbound Checkpoint 3';
+  const mapStatusLabel = gpsStatus === 'Simulated' || gpsStatus === 'Tracking' ? 'TRACKING' : gpsStatus.toUpperCase();
+  const objectiveDistanceLabel = isTreadmillMode ? routeRemainingLabel : UserPreferencesService.formatDistanceFromMeters(Math.max(0, targetDistanceMeters - distance), prefs.distanceUnit);
+  const metricPrimaryValue = isTreadmillMode ? routeProgressLabel : formattedDistance;
+  const metricPrimaryLabel = isTreadmillMode ? 'Route' : 'Distance';
+  const metricTertiaryValue = isTreadmillMode ? goalLabel : paceLabel;
+  const metricTertiaryLabel = isTreadmillMode ? 'Goal' : 'Pace/km';
+  const animatedStatusHeight = statusCardHeight > 0
+    ? statusCardAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [statusCardHeight, 0],
+      })
+    : undefined;
+  const animatedStatusOpacity = statusCardAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+  const animatedStatusTranslateY = statusCardAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -18],
+  });
+  const animatedStatusMarginTop = statusCardAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [16, 0],
+  });
+  const animatedMapTranslateY = mapFocusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -34],
+  });
+  const animatedMapScale = mapFocusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.02],
+  });
+  const animatedMapMarginTop = mapFocusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [16, 6],
+  });
+
   // --- UI RENDER ---
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {notice && (
+        <PrisonCard
+          style={[
+            styles.noticeCard,
+            notice.tone === 'danger' && { borderColor: colors.incomplete },
+            notice.tone === 'warning' && { borderColor: colors.prisonOrange },
+            notice.tone === 'info' && { borderColor: colors.accentTeal },
+          ]}
+        >
+          <Text style={[styles.noticeTitle, notice.tone === 'danger' && { color: colors.incomplete }]}>{notice.title}</Text>
+          <Text style={styles.noticeMessage}>{notice.message}</Text>
+          <PrisonButton title="Dismiss" onPress={() => setNotice(null)} style={styles.noticeBtn} textStyle={{ fontSize: 13, letterSpacing: 1 }} />
+        </PrisonCard>
+      )}
       {/* Start Screen */}
       {screenStage === 'start' && (
         <PrisonCard style={{ alignItems: 'center', marginTop: 32, backgroundColor: 'rgba(24,24,28,0.98)', borderRadius: 20, shadowColor: colors.prisonOrange, shadowOpacity: 0.12, shadowRadius: 16, elevation: 8 }}>
@@ -322,29 +454,94 @@ const MissionDay1Screen = () => {
       {/* Mission Active */}
       {screenStage === 'active' && (
         <>
-          <PrisonCard style={{ marginTop: 16 }}>
-            <Text style={{ fontSize: 20, fontWeight: "bold", letterSpacing: 0.5, textTransform: 'uppercase', color: colors.prisonOrange }}>Status: {missionActive ? 'Active' : 'Not Started'}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Elapsed: {elapsed} min / {workoutLength} min</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Phase: {phase}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Distance: {UserPreferencesService.formatDistanceFromMeters(distance, prefs.distanceUnit)}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Mode: {prefs.missionMode === 'treadmill' ? 'Treadmill/Walking Pad' : 'Outside Route'}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Goal Type: {prefs.goalType === 'distance' ? 'Distance' : 'Time'}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>GPS: {gpsStatus}</Text>
-            <Text style={{ fontSize: 16, fontWeight: "normal", letterSpacing: 0.1 }}>Current Objective: {storyBeats[storyIdx]}</Text>
-          </PrisonCard>
-          <MissionMap
-            path={path}
-            pois={POIS.map((poi, idx) => ({
-              ...poi,
-              coordinate: path.length > 0 ? path[Math.floor((idx + 1) * path.length / (POIS.length + 1))] : { latitude: 37.78825, longitude: -122.4324 }
-            }))}
-            userLocation={userLocation}
-            expanded={mapExpanded}
-            onToggleExpand={() => setMapExpanded(e => !e)}
-            loading={mapLoading}
-            theme={'day'}
+          <View style={styles.activeHero}>
+            <Text style={styles.heroTag}>// Live Mission · Day-01</Text>
+            <Text style={styles.heroTitle}>{day1Mission.title}</Text>
+            <Text style={styles.heroSubtitle}>Stay sharp. Every step is data.</Text>
+            <View style={styles.heroProgressTrack}>
+              <View style={[styles.heroProgressFill, { width: `${completionPercent}%` }]} />
+            </View>
+            <View style={styles.heroProgressRow}>
+              <Text style={styles.heroProgressLabel}>{completionPercent}% complete</Text>
+              <Text style={styles.heroProgressLabel}>{elapsedLabel} / {goalLabel}</Text>
+            </View>
+            <View style={styles.heroChipRow}>
+              <View style={styles.heroChip}><Text style={styles.heroChipText}>{isTreadmillMode ? 'SIMULATED ROUTE' : 'GPS TRACKING'}</Text></View>
+              <View style={styles.heroChip}><Text style={styles.heroChipText}>{prefs.goalType === 'distance' ? 'DISTANCE GOAL' : 'TIME GOAL'}</Text></View>
+            </View>
+          </View>
+          <Animated.View
+            style={[
+              styles.statusCardWrap,
+              {
+                marginTop: animatedStatusMarginTop,
+                opacity: animatedStatusOpacity,
+                transform: [{ translateY: animatedStatusTranslateY }],
+                height: animatedStatusHeight,
+              },
+            ]}
+          >
+            <View
+              onLayout={(event) => {
+                if (!statusCardHeight) {
+                  setStatusCardHeight(Math.ceil(event.nativeEvent.layout.height));
+                }
+              }}
+            >
+              <PrisonCard style={styles.activeCard}>
+                <Text style={styles.activeTitle}>Status: {missionActive ? 'Active' : 'Not Started'}</Text>
+                <Text style={styles.activeMetaText}>Elapsed: {elapsedLabel} / {goalLabel}</Text>
+                <Text style={styles.activeMetaText}>Phase: {phase}</Text>
+                <Text style={styles.activeMetaText}>{isTreadmillMode ? `Route Progress: ${routeProgressLabel}` : `Distance: ${formattedDistance}`}</Text>
+                <Text style={styles.activeMetaText}>Mode: {isTreadmillMode ? 'Treadmill/Walking Pad' : 'Outside Route'}</Text>
+                <Text style={styles.activeMetaText}>Goal Type: {prefs.goalType === 'distance' ? 'Distance' : 'Time'}</Text>
+                <Text style={styles.activeMetaText}>GPS: {gpsStatus}</Text>
+                <Text style={[styles.activeMetaText, styles.activeObjective]}>Current Objective: {storyBeats[storyIdx]}</Text>
+              </PrisonCard>
+            </View>
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.mapFocusWrap,
+              {
+                marginTop: animatedMapMarginTop,
+                transform: [{ translateY: animatedMapTranslateY }, { scale: animatedMapScale }],
+              },
+            ]}
+          >
+            <MissionMap
+              path={path}
+              pois={POIS.map((poi, idx) => ({
+                ...poi,
+                coordinate: path.length > 0 ? path[Math.floor((idx + 1) * path.length / (POIS.length + 1))] : { latitude: 37.78825, longitude: -122.4324 }
+              }))}
+              userLocation={userLocation}
+              expanded={mapExpanded}
+              onToggleExpand={() => setMapExpanded(e => !e)}
+              loading={mapLoading}
+              theme={'day'}
+              mode={isTreadmillMode ? 'simulated' : 'gps'}
+              progressPercent={completionPercent}
+              statusLabel={mapStatusLabel}
+              progressLabel={isTreadmillMode ? routeRemainingLabel.toUpperCase() : `${objectiveDistanceLabel.toUpperCase()} LEFT`}
+              objectiveDirection={objectiveDirection}
+              objectiveName={objectiveName}
+              objectiveDistance={objectiveDistanceLabel}
+              elapsedLabel={elapsedLabel}
+              metricPrimaryValue={metricPrimaryValue}
+              metricPrimaryLabel={metricPrimaryLabel}
+              metricTertiaryValue={metricTertiaryValue}
+              metricTertiaryLabel={metricTertiaryLabel}
+              focusProgress={mapFocusAnim}
+            />
+          </Animated.View>
+          <PrisonButton
+            title="End Mission Early"
+            onPress={() => handleCompleteMission(true)}
+            shimmer
+            style={styles.endMissionBtn}
+            textStyle={styles.endMissionBtnText}
           />
-          <PrisonButton title="End Mission Early" onPress={() => handleCompleteMission(true)} style={{ backgroundColor: colors.incomplete }} />
         </>
       )}
       {/* Result Module (Complete/Incomplete) */}
@@ -389,5 +586,150 @@ const MissionDay1Screen = () => {
 export default MissionDay1Screen;
 
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: colors.slate, minHeight: Dimensions.get('window').height },
+  container: { backgroundColor: '#0D0D0F', minHeight: Dimensions.get('window').height },
+  content: {
+    padding: 16,
+    paddingBottom: 120,
+  },
+  activeHero: {
+    marginTop: 16,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: '#111114',
+    borderWidth: 1,
+    borderColor: 'rgba(255,106,0,0.18)',
+    shadowColor: colors.prisonOrange,
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroTag: {
+    ...typography.monoLabel,
+    color: colors.prisonOrange,
+    marginBottom: 4,
+  },
+  heroTitle: {
+    ...typography.headline,
+    color: colors.text,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginBottom: 14,
+  },
+  heroProgressTrack: {
+    height: 6,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  heroProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: colors.prisonOrange,
+  },
+  heroProgressRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  heroProgressLabel: {
+    ...typography.monoLabel,
+    color: colors.textSecondary,
+    fontSize: 11,
+  },
+  heroChipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+    flexWrap: 'wrap',
+  },
+  heroChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(35,35,41,0.9)',
+  },
+  heroChipText: {
+    ...typography.monoLabel,
+    color: colors.text,
+    fontSize: 11,
+  },
+  statusCardWrap: {
+    overflow: 'hidden',
+  },
+  activeCard: {
+    borderColor: colors.prisonOrange,
+    borderWidth: 1.5,
+    borderRadius: 20,
+    backgroundColor: 'rgba(24,24,28,0.96)',
+    shadowColor: colors.prisonOrange,
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  activeTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.prisonOrange,
+    marginBottom: 8,
+    ...typography.h2,
+  },
+  activeMetaText: {
+    fontSize: 17,
+    color: colors.text,
+    lineHeight: 24,
+    letterSpacing: 0.1,
+  },
+  activeObjective: {
+    marginTop: 6,
+    color: colors.textSecondary,
+  },
+  mapFocusWrap: {
+    transformOrigin: 'center',
+  },
+  endMissionBtn: {
+    marginTop: 10,
+    backgroundColor: colors.incomplete,
+    borderColor: '#ff6f8d',
+    borderWidth: 1,
+    shadowColor: colors.incomplete,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  endMissionBtnText: {
+    color: colors.white,
+    letterSpacing: 1.6,
+    fontSize: 16,
+  },
+  noticeCard: {
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: 'rgba(24,24,28,0.96)',
+  },
+  noticeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.prisonOrange,
+  },
+  noticeMessage: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  noticeBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
 });
