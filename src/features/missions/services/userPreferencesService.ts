@@ -3,19 +3,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type GoalType = 'minutes' | 'distance';
 export type DistanceUnit = 'km' | 'miles';
 export type MissionMode = 'outside' | 'treadmill';
+export type PreferredMissionStyle = 'guided' | 'balanced' | 'scout';
 
 export interface UserPreferences {
   goalType: GoalType;
   distanceUnit: DistanceUnit;
   missionMode: MissionMode;
+  preferredMissionStyle: PreferredMissionStyle;
+  preferredTimeMinutes: number;
+  preferredDistanceValue: number;
 }
 
 const STORAGE_KEY = 'prison_ready_user_preferences_v1';
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  goalType: 'minutes',
+  goalType: 'distance',
   distanceUnit: 'km',
   missionMode: 'outside',
+  preferredMissionStyle: 'balanced',
+  preferredTimeMinutes: 25,
+  preferredDistanceValue: 2,
 };
 
 let cache: UserPreferences | null = null;
@@ -25,6 +32,9 @@ function sanitizePreferences(raw: any): UserPreferences {
     goalType: raw?.goalType === 'distance' ? 'distance' : 'minutes',
     distanceUnit: raw?.distanceUnit === 'miles' ? 'miles' : 'km',
     missionMode: raw?.missionMode === 'treadmill' ? 'treadmill' : 'outside',
+    preferredMissionStyle: raw?.preferredMissionStyle === 'guided' || raw?.preferredMissionStyle === 'scout' ? raw.preferredMissionStyle : 'balanced',
+    preferredTimeMinutes: typeof raw?.preferredTimeMinutes === 'number' && raw.preferredTimeMinutes >= 15 ? raw.preferredTimeMinutes : 25,
+    preferredDistanceValue: typeof raw?.preferredDistanceValue === 'number' && raw.preferredDistanceValue > 0 ? raw.preferredDistanceValue : 2,
   };
 }
 
@@ -57,6 +67,12 @@ export const UserPreferencesService = {
     return this.savePreferences(next);
   },
 
+  async resetPreferences(): Promise<UserPreferences> {
+    cache = DEFAULT_PREFERENCES;
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    return DEFAULT_PREFERENCES;
+  },
+
   formatDistanceFromMiles(miles: number, unit: DistanceUnit): string {
     if (unit === 'miles') {
       return `${miles.toFixed(1)} mi`;
@@ -72,6 +88,13 @@ export const UserPreferencesService = {
     }
     const km = meters / 1000;
     return `${km.toFixed(2)} km`;
+  },
+
+  toMeters(distanceValue: number, unit: DistanceUnit): number {
+    if (unit === 'miles') {
+      return distanceValue * 1609.34;
+    }
+    return distanceValue * 1000;
   },
 };
 

@@ -1,0 +1,251 @@
+{
+  "id": "mission_day1",
+  "title": "The First Drop",
+  "chapterId": "chapter1",
+  "dayNumber": 1,
+  "theme": "drop",
+  "status": "not_started",
+  "routeId": "route_day1",
+  "overview": {
+    "targetMinutes": 30,
+    "durationMin": 30,
+    "durationMax": 30,
+    "distanceMinMiles": 1,
+    "distanceMaxMiles": 1.5,
+    "routeType": "loop route",
+    "difficulty": "beginner"
+  },
+  "story": "Jay, Theo, and Mina test whether the neighborhood drops are real and discover the first package mid-route.",
+  "briefingTranscript": [
+    "Something in the neighborhood is off. Specific things go missing and sometimes specific things show up.",
+    "The route matters. Timing matters. If the drop is real, they have one shot to find it without looking obvious.",
+    "Stay moving, stay casual, and trust the route long enough to see if the pattern breaks open."
+  ],
+  "artifact": {
+    "id": "artifact_first_drop",
+    "type": "clue",
+    "title": "The First Drop",
+    "summary": "A sealed package confirms the route pattern is real and intentional.",
+    "truthLevel": "partial",
+    "rarity": 1,
+    "isGuaranteed": true,
+    "unlockCondition": "Reach the first drop before the end of the route."
+  },
+  "reportBack": {
+    "id": "reportback_day1",
+    "prompt": "What did the route prove?",
+    "options": [
+      {
+        "id": "opt1",
+        "label": "It was probably random",
+        "outcomeType": "incorrect",
+        "outcomeBand": "poor",
+        "outcomeText": "You downplay the find. The team loses some momentum and the pattern stays blurry."
+      },
+      {
+        "id": "opt2",
+        "label": "There is a real drop system",
+        "outcomeType": "correct",
+        "outcomeBand": "strong",
+        "outcomeText": "You call it correctly. The package turns the rumor into a live lead, and the team commits to the game."
+      },
+      {
+        "id": "opt3",
+        "label": "Something is happening, but we need another run",
+        "outcomeType": "partial",
+        "outcomeBand": "partial",
+        "outcomeText": "You log the find carefully. It is enough to continue, but not enough to own the story yet."
+      }
+    ]
+  },
+  "sideMissions": [
+    {
+      "id": "stay_casual",
+      "label": "Stay Casual",
+      "promptText": "Do not change pace too much. Blend in.",
+      "successText": "Nice. You do not look suspicious at all.",
+      "failureText": "Okay yeah... that was a little obvious."
+    },
+    {
+      "id": "rush_the_window",
+      "label": "Rush the Window",
+      "promptText": "Pick it up a little. If this is real, the window is short.",
+      "successText": "Perfect timing.",
+      "failureText": "We might be cutting it close."
+    }
+  ],
+  "beats": [
+    {
+      "id": "m1_warmup_001",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Hey... quick question. You ever notice stuff goes missing around here?",
+      "trigger": { "type": "time", "atSec": 10 }
+    },
+    {
+      "id": "m1_warmup_002",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "Like my snacks? Yeah. Tragic.",
+      "trigger": { "type": "time", "atSec": 25 }
+    },
+    {
+      "id": "m1_warmup_003",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "No, not random stuff. Specific stuff.",
+      "trigger": { "type": "time", "atSec": 40 }
+    },
+    {
+      "id": "m1_warmup_004",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "And sometimes... stuff shows up.",
+      "trigger": { "type": "time", "atSec": 70 }
+    },
+    {
+      "id": "m1_warmup_005",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Let us just take a walk. I will show you.",
+      "trigger": { "type": "time", "atSec": 100 }
+    },
+    {
+      "id": "m1_obj_follow_route",
+      "phase": "active_1",
+      "kind": "objective",
+      "title": "Objective updated",
+      "text": "Follow the route.",
+      "trigger": { "type": "time", "atSec": 150 }
+    },
+    {
+      "id": "m1_active_001",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "Look around when you walk. Corners, signs, benches.",
+      "trigger": { "type": "time", "atSec": 240 }
+    },
+    {
+      "id": "m1_active_002",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "You are saying people just... leave things?",
+      "trigger": { "type": "time", "atSec": 330 }
+    },
+    {
+      "id": "m1_active_003",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "I think they are meant to be found.",
+      "trigger": { "type": "time", "atSec": 370 }
+    },
+    {
+      "id": "m1_side_001",
+      "phase": "active_1",
+      "kind": "sideMissionStart",
+      "speaker": "Jay",
+      "text": "Do not change your pace too much. Just blend in.",
+      "sideMissionId": "stay_casual",
+      "trigger": { "type": "time", "atSec": 480 }
+    },
+    {
+      "id": "m1_active_004",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "So how do people know where to go?",
+      "trigger": { "type": "time", "atSec": 720 }
+    },
+    {
+      "id": "m1_active_005",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "That is the thing. I think it is timed.",
+      "trigger": { "type": "time", "atSec": 810 }
+    },
+    {
+      "id": "m1_active_006",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "If you are early, nothing is there. If you are late, someone else got it.",
+      "trigger": { "type": "time", "atSec": 900 }
+    },
+    {
+      "id": "m1_side_002",
+      "phase": "active_2",
+      "kind": "sideMissionStart",
+      "speaker": "Jay",
+      "text": "If this is real, we might be close. Pick it up a little.",
+      "sideMissionId": "rush_the_window",
+      "trigger": { "type": "progress", "atPercent": 70 }
+    },
+    {
+      "id": "m1_climax_001",
+      "phase": "climax",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Alright... this is the spot.",
+      "trigger": { "type": "progress", "atPercent": 80 }
+    },
+    {
+      "id": "m1_climax_002",
+      "phase": "climax",
+      "kind": "audioCue",
+      "title": "Drop found",
+      "text": "Audio cue: drop found.",
+      "audioKey": "AUDIO_DROP_FOUND",
+      "trigger": { "type": "progress", "atPercent": 82 }
+    },
+    {
+      "id": "m1_climax_003",
+      "phase": "climax",
+      "kind": "artifact",
+      "speaker": "Mina",
+      "text": "Do not stop. Grab it and keep moving.",
+      "artifactId": "artifact_first_drop",
+      "trigger": { "type": "progress", "atPercent": 83 }
+    },
+    {
+      "id": "m1_cooldown_001",
+      "phase": "cooldown",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "What is this?",
+      "trigger": { "type": "time", "atSec": 1650 }
+    },
+    {
+      "id": "m1_cooldown_002",
+      "phase": "cooldown",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "I do not know yet.",
+      "trigger": { "type": "time", "atSec": 1680 }
+    },
+    {
+      "id": "m1_cooldown_003",
+      "phase": "cooldown",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "But now we know it is real.",
+      "trigger": { "type": "time", "atSec": 1700 }
+    },
+    {
+      "id": "m1_cooldown_004",
+      "phase": "cooldown",
+      "kind": "missionComplete",
+      "speaker": "Jay",
+      "text": "And if there is one, there is more.",
+      "trigger": { "type": "time", "atSec": 1740 }
+    }
+  ]
+}

@@ -10,23 +10,48 @@ import MissionBriefScreen from '../features/missions/screens/MissionBriefScreen'
 import { ReportBackScreen } from '../features/reportBack/screens/ReportBackScreen';
 import ArtifactsScreen from '../features/artifacts/screens/ArtifactsScreen';
 import StorySoFarScreen from '../features/story/screens/StorySoFarScreen';
+import MissionStartScreen from '../features/missions/screens/MissionStartScreen';
+import MissionLengthScreen from '../features/missions/screens/MissionLengthScreen';
+import { AuthStorageService, defaultAuthState } from '../features/auth/services/authStorageService';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MissionsStack() {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="MissionBrief" component={MissionBriefScreen} options={{ title: 'Mission Brief' }} />
-      <Stack.Screen name="MissionDay1" component={MissionDay1Screen} options={{ title: 'Day 1 Mission' }} />
-      <Stack.Screen name="ReportBack" component={ReportBackScreen} options={{ title: 'Report Back' }} />
-      <Stack.Screen name="Artifacts" component={ArtifactsScreen} options={{ title: 'Artifacts' }} />
-      <Stack.Screen name="StorySoFar" component={StorySoFarScreen} options={{ title: 'Story So Far' }} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MissionStart" component={MissionStartScreen} />
+      <Stack.Screen name="MissionLength" component={MissionLengthScreen} />
+      <Stack.Screen name="MissionBrief" component={MissionBriefScreen} />
+      <Stack.Screen name="MissionDay1" component={MissionDay1Screen} />
+      <Stack.Screen name="ReportBack" component={ReportBackScreen} />
+      <Stack.Screen name="Artifacts" component={ArtifactsScreen} />
+      <Stack.Screen name="StorySoFar" component={StorySoFarScreen} />
     </Stack.Navigator>
   );
 }
 
 export default function MainTabNavigator() {
+  const [themeKey, setThemeKey] = React.useState(defaultAuthState.selectedTheme);
+
+  React.useEffect(() => {
+    let mounted = true;
+    AuthStorageService.loadState().then((state) => {
+      if (mounted) {
+        setThemeKey(state.selectedTheme);
+      }
+    });
+
+    const unsubscribe = AuthStorageService.subscribe((state) => {
+      setThemeKey(state.selectedTheme);
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -36,7 +61,7 @@ export default function MainTabNavigator() {
           tabs={state.routeNames}
           activeTab={state.routeNames[state.index]}
           onTabPress={tab => navigation.navigate(tab as never)}
-          themeKey="prison"
+          themeKey={themeKey}
         />
       )}
     >
@@ -47,3 +72,4 @@ export default function MainTabNavigator() {
     </Tab.Navigator>
   );
 }
+

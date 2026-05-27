@@ -15,6 +15,8 @@ export interface Mission {
   primaryArtifactId: string;
   reportBackId: string;
   triggerIds: string[];
+  story: string;
+  briefingTranscript: string[];
 }
 
 export type MissionStatus = 'not_started' | 'active' | 'completed' | 'abandoned';

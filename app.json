@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "platforms": [
-      "android"
+      "android",
+      "web"
     ],
     "icon": "./assets/icon.png",
     "splash": {
@@ -19,11 +20,38 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationWhenInUsePermission": "Allow Prison Ready to track your route while a mission is active.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Prison Ready to keep mission progress running while you walk, even when the app is backgrounded."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "mission-updates"
+        }
+      ]
+    ],
     "android": {
       "permissions": [
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE"
       ],
-      "package": "com.prisonready.app"
+      "package": "com.prisonready.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "REPLACE_WITH_ANDROID_MAPS_API_KEY"
+        }
+      }
     },
     "userInterfaceStyle": "light",
     "extra": {

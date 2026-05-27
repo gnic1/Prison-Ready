@@ -26,7 +26,7 @@ export const SessionService = {
     session.endedAt = new Date().toISOString();
     session.artifactIdsEarned.push(artifactId);
     session.reportBackOptionId = reportBackOptionId;
-    session.completionResult = outcomeBand;
+    session.completionResult = outcomeBand === 'strong' ? 'standard' : outcomeBand === 'poor' ? 'abandoned' : 'partial';
     session.outcomeBand = outcomeBand;
     if (recapEntry) session.recapEntry = recapEntry;
   },

@@ -25,6 +25,12 @@ export const day1Mission: Mission = {
   primaryArtifactId: DAY1_ARTIFACT_ID,
   reportBackId: DAY1_REPORTBACK_ID,
   triggerIds: ['trigger_start', 'trigger_artifact', 'trigger_complete'],
+  story: 'A familiar route is now a live instrument. Move through it, keep your pace honest, and let the mission reveal what changed.',
+  briefingTranscript: [
+    'You are leaving familiar ground, but the route itself is the tool. Stay observant.',
+    'Movement unlocks the story. If the world changes while you are backgrounded, the mission queue will hold those beats in order.',
+    'Distance mode keeps the route honest. Time mode stays explicit and visible, but your path is still the main signal outdoors.',
+  ],
 };
 
 export const day1Triggers: MissionTrigger[] = [
@@ -36,6 +42,7 @@ export const day1Triggers: MissionTrigger[] = [
     progressMax: 0,
     requiresSafeState: true,
     audioKey: 'AUDIO_PLACEHOLDER_INTRO',
+    title: 'Mission start',
     text: 'Begin your familiar route.',
     firesOnce: true,
     priority: 1,
@@ -48,6 +55,7 @@ export const day1Triggers: MissionTrigger[] = [
     progressMax: 60,
     requiresSafeState: true,
     audioKey: 'AUDIO_PLACEHOLDER_ARTIFACT',
+    title: 'Anomaly detected',
     text: 'You notice something odd about a house...',
     firesOnce: true,
     priority: 2,
@@ -60,6 +68,7 @@ export const day1Triggers: MissionTrigger[] = [
     progressMax: 100,
     requiresSafeState: true,
     audioKey: 'AUDIO_PLACEHOLDER_COMPLETE',
+    title: 'Mission complete',
     text: 'Mission complete. Time to report back.',
     firesOnce: true,
     priority: 3,

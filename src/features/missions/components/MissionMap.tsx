@@ -305,9 +305,9 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                         <Circle cx={wp.x} cy={wp.y} r={3.5} fill="rgba(0,0,0,0.35)" />
                       ) : (
                         <SvgText
-                          x={wp.x} y={wp.y}
+                          x={wp.x}
+                          y={wp.y + 3}
                           textAnchor="middle"
-                          dominantBaseline="central"
                           fill={active ? C.orange : '#2a5040'}
                           fontSize={9}
                           fontWeight="700"

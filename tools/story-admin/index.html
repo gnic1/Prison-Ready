@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prison Ready Story Admin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <p class="eyebrow">Story Admin</p>
+          <h1>Missions</h1>
+        </div>
+        <div class="sidebar-actions">
+          <button id="new-mission-button" class="ghost-button">New Mission</button>
+          <button id="compile-button" class="primary-button">Compile Missions</button>
+        </div>
+        <div id="mission-list" class="mission-list"></div>
+      </aside>
+
+      <main class="main">
+        <header class="main-header">
+          <div>
+            <p class="eyebrow">Authoring Surface</p>
+            <h2 id="editor-title">Select a mission</h2>
+          </div>
+          <button id="save-button" class="primary-button" disabled>Save Mission</button>
+        </header>
+
+        <section class="panel">
+          <div class="grid grid-two">
+            <label>
+              Mission Id
+              <input id="mission-id" />
+            </label>
+            <label>
+              Title
+              <input id="mission-title" />
+            </label>
+            <label>
+              Day Number
+              <input id="mission-day" type="number" />
+            </label>
+            <label>
+              Route Id
+              <input id="mission-route" />
+            </label>
+            <label>
+              Theme
+              <input id="mission-theme" />
+            </label>
+            <label>
+              Chapter Id
+              <input id="mission-chapter" />
+            </label>
+          </div>
+          <label>
+            Story Summary
+            <textarea id="mission-story" rows="3"></textarea>
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="section-row">
+            <div>
+              <p class="eyebrow">Mission Framing</p>
+              <h3>Overview and Briefing</h3>
+            </div>
+          </div>
+          <div class="grid grid-three">
+            <label>
+              Target Minutes
+              <input id="overview-target-minutes" type="number" />
+            </label>
+            <label>
+              Duration Min
+              <input id="overview-duration-min" type="number" />
+            </label>
+            <label>
+              Duration Max
+              <input id="overview-duration-max" type="number" />
+            </label>
+            <label>
+              Distance Min Miles
+              <input id="overview-distance-min" type="number" step="0.1" />
+            </label>
+            <label>
+              Distance Max Miles
+              <input id="overview-distance-max" type="number" step="0.1" />
+            </label>
+            <label>
+              Route Type
+              <input id="overview-route-type" />
+            </label>
+            <label>
+              Difficulty
+              <input id="overview-difficulty" />
+            </label>
+          </div>
+          <label>
+            Briefing Transcript
+            <textarea id="briefing-transcript" rows="6" placeholder="One line per briefing beat"></textarea>
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="section-row">
+            <div>
+              <p class="eyebrow">Unlock Reward</p>
+              <h3>Artifact</h3>
+            </div>
+          </div>
+          <div class="grid grid-three">
+            <label>
+              Artifact Id
+              <input id="artifact-id" />
+            </label>
+            <label>
+              Type
+              <input id="artifact-type" />
+            </label>
+            <label>
+              Truth Level
+              <input id="artifact-truth-level" />
+            </label>
+            <label>
+              Title
+              <input id="artifact-title" />
+            </label>
+            <label>
+              Rarity
+              <input id="artifact-rarity" type="number" />
+            </label>
+            <label>
+              Guaranteed
+              <select id="artifact-guaranteed">
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Summary
+            <textarea id="artifact-summary" rows="3"></textarea>
+          </label>
+          <label>
+            Unlock Condition
+            <textarea id="artifact-unlock-condition" rows="2"></textarea>
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="section-row">
+            <div>
+              <p class="eyebrow">Timed / Triggered Beats</p>
+              <h3>Beats</h3>
+            </div>
+            <button id="add-beat-button" class="ghost-button">Add Beat</button>
+          </div>
+          <div id="beats-container" class="stack"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-row">
+            <div>
+              <p class="eyebrow">Report Back</p>
+              <h3>Options</h3>
+            </div>
+            <button id="add-report-option-button" class="ghost-button">Add Option</button>
+          </div>
+          <label>
+            Report Prompt
+            <textarea id="report-prompt" rows="2"></textarea>
+          </label>
+          <div id="report-options" class="stack"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-row">
+            <div>
+              <p class="eyebrow">Side Missions</p>
+              <h3>Branch Beats</h3>
+            </div>
+            <button id="add-side-mission-button" class="ghost-button">Add Side Mission</button>
+          </div>
+          <div id="side-missions" class="stack"></div>
+        </section>
+
+        <section id="status" class="status-bar">Ready.</section>
+      </main>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+  </html>

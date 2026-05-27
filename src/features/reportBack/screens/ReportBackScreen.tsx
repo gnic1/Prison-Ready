@@ -1,82 +1,113 @@
-
-import React, { useState } from 'react';
-import { View, Text, Button } from 'react-native';
-import { day1ReportBack } from '../../missions/data/day1.mission';
-import { ReportBackService } from '../../missions/services/reportBackService';
-import { SessionService } from '../../missions/services/sessionService';
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Speech from 'expo-speech';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { MissionEngineService } from '../../missions/services/missionEngineService';
+import { AuthStorageService, defaultAuthState } from '../../auth/services/authStorageService';
+import { themes } from '../../../theme/themes';
+import { PrisonButton } from '../../../components/PrisonButton';
+import { deriveMissionPerformance } from '../../missions/services/missionMetaService';
+import { MissionRepository } from '../../missions/services/missionRepository';
 
 export const ReportBackScreen = () => {
-  const navigation = useNavigation();
-  const [selected, setSelected] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const session = SessionService.getSession();
+  const navigation = useNavigation<any>();
+  const [themeKey, setThemeKey] = React.useState(defaultAuthState.selectedTheme);
+  const [missionRecord, setMissionRecord] = React.useState<any>(null);
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const [submittedOutcome, setSubmittedOutcome] = React.useState<any>(null);
 
-  // Only allow Report Back if session is completed (not paused/abandoned)
-  if (!session || session.status !== 'completed') {
+  const refresh = React.useCallback(async () => {
+    const [auth, latest] = await Promise.all([
+      AuthStorageService.loadState(),
+      MissionEngineService.getLatestMissionRecord(),
+    ]);
+    setThemeKey(auth.selectedTheme);
+    setMissionRecord(latest);
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
+
+  const theme = themes[themeKey];
+  const missionPerformance = deriveMissionPerformance(missionRecord);
+  const reportBack = missionRecord?.missionId
+    ? MissionRepository.getReportBackForMission(missionRecord.missionId) || MissionRepository.getPrimaryReportBack()
+    : MissionRepository.getPrimaryReportBack();
+
+  if (!missionRecord || missionRecord.status !== 'completed') {
     return (
-      <View style={{ padding: 16 }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#b77' }}>Mission incomplete or not available for Report Back.</Text>
-        <Button title="Back to Mission" onPress={() => navigation.navigate('MissionDay1')} />
+      <View style={styles.container}>
+        <LinearGradient colors={theme.gradients.screen} style={StyleSheet.absoluteFill} />
+        <View style={styles.card}>
+          <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>REPORT BACK //</Text>
+          <Text style={styles.title}>No completed mission is ready for report-back.</Text>
+          <PrisonButton title="Back to Missions" onPress={() => navigation.navigate('MissionDay1')} />
+        </View>
       </View>
     );
   }
 
-  const handleSelect = (optionId: string) => {
-    setSelected(optionId);
-  };
-
-  const handleSubmit = () => {
-    if (!selected) return;
-    ReportBackService.selectOption(selected);
-    // Find the selected option for outcome band and text
-    const option = day1ReportBack.options.find(opt => opt.id === selected);
-    if (option) {
-      // Recap entry for story so far
-      const recapEntry = `Last time: ${option.outcomeText} (Result: ${option.outcomeBand})`;
-      SessionService.completeSession(
-        SessionService.getSession()?.artifactIdsEarned[0] || '',
-        selected,
-        option.outcomeBand,
-        recapEntry
-      );
+  const submit = async () => {
+    const option = reportBack.options.find((item) => item.id === selected);
+    if (!option) {
+      return;
     }
-    setSubmitted(true);
-  };
-
-  const handleNarrate = () => {
-    if (!selected) return;
-    const option = day1ReportBack.options.find(opt => opt.id === selected);
-    if (option) {
-      Speech.speak(option.outcomeText);
+    const recapEntry = `Last mission: ${option.outcomeText}`;
+    const nextMissionRecord = await MissionEngineService.applyReportBack(option.id, option.outcomeBand, recapEntry);
+    if (nextMissionRecord) {
+      setMissionRecord(nextMissionRecord);
     }
+    setSubmittedOutcome(option);
   };
-
-  if (submitted && selected) {
-    const option = day1ReportBack.options.find(opt => opt.id === selected);
-    return (
-      <View style={{ padding: 16 }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Mission Outcome</Text>
-        <Text style={{ marginVertical: 16 }}>{option?.outcomeText}</Text>
-        <Button title="🔊 Read Aloud" onPress={handleNarrate} />
-        <Button title="Continue" onPress={() => navigation.navigate('Artifacts')} />
-      </View>
-    );
-  }
 
   return (
-    <View style={{ padding: 16 }}>
-      <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{day1ReportBack.prompt}</Text>
-      {day1ReportBack.options.map(opt => (
-        <Button
-          key={opt.id}
-          title={opt.label}
-          onPress={() => handleSelect(opt.id)}
-          color={selected === opt.id ? 'green' : undefined}
-        />
-      ))}
-      <Button title="Submit" onPress={handleSubmit} disabled={!selected} />
+    <View style={styles.container}>
+      <LinearGradient colors={theme.gradients.screen} style={StyleSheet.absoluteFill} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>REPORT BACK //</Text>
+        <Text style={styles.title}>{reportBack.prompt}</Text>
+        {!submittedOutcome ? reportBack.options.map((option) => (
+          <TouchableOpacity key={option.id} onPress={() => setSelected(option.id)} style={[styles.optionCard, selected === option.id && { borderColor: theme.colors.accent }]}>
+            <Text style={styles.optionLabel}>{option.label}</Text>
+            <Text style={styles.optionBody}>{option.outcomeText}</Text>
+          </TouchableOpacity>
+        )) : (
+          <View style={styles.card}>
+            <Text style={styles.optionLabel}>Mission Outcome</Text>
+            <Text style={styles.optionBody}>{submittedOutcome.outcomeText}</Text>
+            {missionPerformance ? (
+              <Text style={styles.performanceText}>
+                Grade {missionPerformance.rank} / {missionPerformance.score} score / {missionPerformance.xpAward} XP
+              </Text>
+            ) : null}
+            <TouchableOpacity onPress={() => Speech.speak(submittedOutcome.outcomeText)}>
+              <Text style={[styles.readAloud, { color: theme.colors.accent }]}>Read aloud</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {!submittedOutcome ? (
+          <PrisonButton title="Submit Report" onPress={submit} />
+        ) : (
+          <PrisonButton title="Continue to Artifacts" onPress={() => navigation.navigate('Artifacts')} shimmer />
+        )}
+      </ScrollView>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { padding: 18, paddingTop: 60, paddingBottom: 120, gap: 12 },
+  card: { borderRadius: 22, padding: 18, backgroundColor: 'rgba(12,16,24,0.82)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  eyebrow: { fontSize: 12, fontWeight: '700', letterSpacing: 2.1 },
+  title: { color: '#F4F2EE', fontSize: 28, lineHeight: 34, fontWeight: '800' },
+  optionCard: { borderRadius: 20, padding: 16, backgroundColor: 'rgba(10,13,20,0.78)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  optionLabel: { color: '#F4F2EE', fontSize: 17, fontWeight: '700', marginBottom: 6 },
+  optionBody: { color: '#C4CBD8', lineHeight: 21 },
+  performanceText: { color: '#FFD58B', lineHeight: 21, marginTop: 10, fontWeight: '700' },
+  readAloud: { marginTop: 12, fontWeight: '700', letterSpacing: 1 },
+});

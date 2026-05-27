@@ -2,11 +2,12 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { themes } from '../theme/themes';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TAB_ICONS: Record<string, string> = {
   Home: '⌂',
-  Missions: '⊞',
-  Badges: '◈',
+  Missions: '✦',
+  Badges: '◆',
   Progress: '◎',
 };
 
@@ -26,6 +27,7 @@ interface GameBottomNavProps {
 
 export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison' }: GameBottomNavProps) {
   const theme = themes[themeKey];
+  const insets = useSafeAreaInsets();
   return (
     <View
       style={[
@@ -34,14 +36,15 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
           backgroundColor: 'rgba(24,24,28,0.98)',
           borderTopColor: 'transparent',
           shadowColor: theme.colors.prisonOrange,
-          shadowOpacity: 0.12,
-          shadowRadius: 16,
-          elevation: 12,
+          shadowOpacity: 0.18,
+          shadowRadius: 22,
+          elevation: 18,
+          bottom: Math.max(insets.bottom, 12),
         },
       ]}
     >
       <LinearGradient
-        colors={['rgba(7,10,14,0.96)', 'rgba(12,18,24,0.96)', 'rgba(7,10,14,0.98)']}
+        colors={theme.gradients.dock}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -94,10 +97,13 @@ export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison'
 
 const styles = StyleSheet.create({
   nav: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    height: 66,
+    height: 72,
     borderTopWidth: 0,
     borderTopColor: 'transparent',
     shadowColor: undefined,
@@ -105,6 +111,8 @@ const styles = StyleSheet.create({
     shadowOpacity: undefined,
     shadowRadius: undefined,
     elevation: 0,
+    borderRadius: 28,
+    overflow: 'hidden',
   },
   topRule: {
     position: 'absolute',
@@ -118,7 +126,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 7,
+    paddingVertical: 9,
     position: 'relative',
   },
   activeTab: {

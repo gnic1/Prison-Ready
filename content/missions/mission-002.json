@@ -1,0 +1,244 @@
+{
+  "id": "mission_day2",
+  "title": "Not the Only Ones",
+  "chapterId": "chapter1",
+  "dayNumber": 2,
+  "theme": "rivals",
+  "status": "not_started",
+  "routeId": "route_day2",
+  "overview": {
+    "targetMinutes": 30,
+    "durationMin": 30,
+    "durationMax": 30,
+    "distanceMinMiles": 1.1,
+    "distanceMaxMiles": 1.6,
+    "routeType": "loop variation",
+    "difficulty": "beginner"
+  },
+  "story": "The team confirms the drops are part of a larger system and realizes other players are already moving through the same routes.",
+  "briefingTranscript": [
+    "Yesterday was not random. The package was real, and someone else cleared the location after the team left.",
+    "A second route may hold another drop, but the bigger discovery is that the team is not alone anymore.",
+    "This run is about rhythm, not panic. Stay smooth, stay early, and beat the other players to the window."
+  ],
+  "artifact": {
+    "id": "artifact_rival_trace",
+    "type": "intel",
+    "title": "Rival Trace",
+    "summary": "A second drop confirms competing players are checking the same neighborhood routes.",
+    "truthLevel": "strong",
+    "rarity": 1,
+    "isGuaranteed": true,
+    "unlockCondition": "Reach the second drop ahead of the unseen rival."
+  },
+  "reportBack": {
+    "id": "reportback_day2",
+    "prompt": "What changed on the second run?",
+    "options": [
+      {
+        "id": "opt1",
+        "label": "It is still probably random",
+        "outcomeType": "incorrect",
+        "outcomeBand": "poor",
+        "outcomeText": "You miss the implication. The package feels important, but the pattern still slips through your fingers."
+      },
+      {
+        "id": "opt2",
+        "label": "There are other players on the route",
+        "outcomeType": "correct",
+        "outcomeBand": "strong",
+        "outcomeText": "You call the real escalation. The team is not exploring anymore; they are competing inside a live system."
+      },
+      {
+        "id": "opt3",
+        "label": "The timing is getting tighter",
+        "outcomeType": "partial",
+        "outcomeBand": "partial",
+        "outcomeText": "You catch part of it. Timing clearly matters, but the rival angle still needs one more clean read."
+      }
+    ]
+  },
+  "sideMissions": [
+    {
+      "id": "keep_it_smooth",
+      "label": "Keep It Smooth",
+      "promptText": "Stay steady and predictable.",
+      "successText": "Good. Predictable is invisible.",
+      "failureText": "That did not look smooth."
+    },
+    {
+      "id": "beat_them_there",
+      "label": "Beat Them There",
+      "promptText": "Do not be late. Pick it up.",
+      "successText": "We are ahead.",
+      "failureText": "That felt slow."
+    }
+  ],
+  "beats": [
+    {
+      "id": "m2_warmup_001",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Okay. Yesterday was not random.",
+      "trigger": { "type": "time", "atSec": 10 }
+    },
+    {
+      "id": "m2_warmup_002",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "We found a mystery package. That is not normal.",
+      "trigger": { "type": "time", "atSec": 30 }
+    },
+    {
+      "id": "m2_warmup_003",
+      "phase": "warmup",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "I came back later. It was gone.",
+      "trigger": { "type": "time", "atSec": 50 }
+    },
+    {
+      "id": "m2_obj_001",
+      "phase": "active_1",
+      "kind": "objective",
+      "title": "New objective",
+      "text": "Check another location.",
+      "trigger": { "type": "time", "atSec": 150 }
+    },
+    {
+      "id": "m2_active_001",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "I heard there might be another drop today.",
+      "trigger": { "type": "time", "atSec": 240 }
+    },
+    {
+      "id": "m2_active_002",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "You heard or you guessed?",
+      "trigger": { "type": "time", "atSec": 320 }
+    },
+    {
+      "id": "m2_active_003",
+      "phase": "active_1",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Both.",
+      "trigger": { "type": "time", "atSec": 340 }
+    },
+    {
+      "id": "m2_side_001",
+      "phase": "active_1",
+      "kind": "sideMissionStart",
+      "speaker": "Mina",
+      "text": "If this is a system, people are watching patterns. Stay steady.",
+      "sideMissionId": "keep_it_smooth",
+      "trigger": { "type": "time", "atSec": 360 }
+    },
+    {
+      "id": "m2_active_004",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "Who else knows about this?",
+      "trigger": { "type": "time", "atSec": 630 }
+    },
+    {
+      "id": "m2_active_005",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "That is what I am wondering.",
+      "trigger": { "type": "time", "atSec": 720 }
+    },
+    {
+      "id": "m2_active_006",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "I saw someone yesterday. They were checking the same spots.",
+      "trigger": { "type": "time", "atSec": 810 }
+    },
+    {
+      "id": "m2_rival_hint",
+      "phase": "active_2",
+      "kind": "audioCue",
+      "title": "Tone shift",
+      "text": "Audio cue: subtle tone shift.",
+      "audioKey": "AUDIO_RIVAL_HINT",
+      "trigger": { "type": "progress", "atPercent": 50 }
+    },
+    {
+      "id": "m2_rival_hint_dialogue",
+      "phase": "active_2",
+      "kind": "dialogue",
+      "speaker": "Jay",
+      "text": "Alright... so we are not the only ones.",
+      "trigger": { "type": "progress", "atPercent": 50 }
+    },
+    {
+      "id": "m2_side_002",
+      "phase": "build",
+      "kind": "sideMissionStart",
+      "speaker": "Jay",
+      "text": "Let us not be late. Pick it up.",
+      "sideMissionId": "beat_them_there",
+      "trigger": { "type": "progress", "atPercent": 65 }
+    },
+    {
+      "id": "m2_climax_001",
+      "phase": "climax",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "This is it.",
+      "trigger": { "type": "progress", "atPercent": 85 }
+    },
+    {
+      "id": "m2_climax_002",
+      "phase": "climax",
+      "kind": "artifact",
+      "speaker": "Jay",
+      "text": "Do not hesitate. Grab it.",
+      "artifactId": "artifact_rival_trace",
+      "trigger": { "type": "progress", "atPercent": 86 }
+    },
+    {
+      "id": "m2_climax_003",
+      "phase": "climax",
+      "kind": "audioCue",
+      "title": "Drop found",
+      "text": "Audio cue: drop found.",
+      "audioKey": "AUDIO_DROP_FOUND",
+      "trigger": { "type": "progress", "atPercent": 86 }
+    },
+    {
+      "id": "m2_cooldown_001",
+      "phase": "cooldown",
+      "kind": "dialogue",
+      "speaker": "Theo",
+      "text": "Okay this is officially a thing.",
+      "trigger": { "type": "time", "atSec": 1650 }
+    },
+    {
+      "id": "m2_cooldown_002",
+      "phase": "cooldown",
+      "kind": "dialogue",
+      "speaker": "Mina",
+      "text": "This is a system.",
+      "trigger": { "type": "time", "atSec": 1680 }
+    },
+    {
+      "id": "m2_cooldown_003",
+      "phase": "cooldown",
+      "kind": "missionComplete",
+      "speaker": "Jay",
+      "text": "No. It is a game. And we are playing now.",
+      "trigger": { "type": "time", "atSec": 1740 }
+    }
+  ]
+}

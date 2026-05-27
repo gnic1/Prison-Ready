@@ -1,18 +1,21 @@
 
 import React, { useState } from 'react';
 import { View, Text, Button, ScrollView, Alert } from 'react-native';
-import { day1Mission, day1Triggers, day1Artifact, day1ReportBack } from '../data/day1.mission';
 import { SessionService } from '../services/sessionService';
 import { ArtifactService } from '../services/artifactService';
 import { useNavigation } from '@react-navigation/native';
 import { GpsService } from '../services/gpsService';
+import { MissionRepository } from '../services/missionRepository';
 
 export const MissionDebugScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [workoutLength, setWorkoutLength] = useState<number>(20);
   const [missionActive, setMissionActive] = useState(false);
+  const mission = MissionRepository.getPrimaryMission();
+  const triggers = MissionRepository.getTriggersForMission(mission.id);
+  const artifact = MissionRepository.getArtifactForMission(mission.id) || MissionRepository.getPrimaryArtifact();
 
-  const minLength = day1Mission.durationMin;
+  const minLength = mission.durationMin;
   const supportedLengths = [15, 20, 25, 30];
 
   function buildMissionPacing(duration: number): number[] {
@@ -27,7 +30,7 @@ export const MissionDebugScreen = () => {
     }
     setMissionActive(true);
     const pacingCheckpoints = buildMissionPacing(workoutLength);
-    const session = SessionService.startSession(day1Mission.id, day1Mission.routeId);
+    const session = SessionService.startSession(mission.id, mission.routeId);
     session.workoutLength = workoutLength;
     session.pacingCheckpoints = pacingCheckpoints;
     // Start GPS tracking
@@ -46,23 +49,23 @@ export const MissionDebugScreen = () => {
   const handleCompleteMission = () => {
     GpsService.stopTracking();
     setMissionActive(false);
-    ArtifactService.awardArtifact(day1Artifact, SessionService.getSession()?.id || '', day1Mission.chapterId, 'player1');
-    SessionService.completeSession(day1Artifact.id, '', 'standard');
+    ArtifactService.awardArtifact(artifact, SessionService.getSession()?.id || '', mission.chapterId, 'player1');
+    SessionService.completeSession(artifact.id, '', 'strong');
     navigation.navigate('ReportBack');
   };
 
   return (
     <ScrollView style={{ padding: 16 }}>
-      <Text style={{ fontWeight: 'bold', fontSize: 20 }}>{day1Mission.title}</Text>
-      <Text>Theme: {day1Mission.theme}</Text>
-      <Text>Status: {day1Mission.status}</Text>
-      <Text>Duration: {day1Mission.durationMin}-{day1Mission.durationMax} min</Text>
-      <Text>Distance: {day1Mission.distanceMinMiles}-{day1Mission.distanceMaxMiles} mi</Text>
-      <Text>Route ID: {day1Mission.routeId}</Text>
-      <Text>Intro Audio: {day1Mission.introAudioKey}</Text>
-      <Text>Completion Audio: {day1Mission.completionAudioKey}</Text>
+      <Text style={{ fontWeight: 'bold', fontSize: 20 }}>{mission.title}</Text>
+      <Text>Theme: {mission.theme}</Text>
+      <Text>Status: {mission.status}</Text>
+      <Text>Duration: {mission.durationMin}-{mission.durationMax} min</Text>
+      <Text>Distance: {mission.distanceMinMiles}-{mission.distanceMaxMiles} mi</Text>
+      <Text>Route ID: {mission.routeId}</Text>
+      <Text>Intro Audio: {mission.introAudioKey}</Text>
+      <Text>Completion Audio: {mission.completionAudioKey}</Text>
       <Text style={{ marginTop: 16, fontWeight: 'bold' }}>Triggers</Text>
-      {day1Triggers.map(trigger => (
+      {triggers.map(trigger => (
         <View key={trigger.id} style={{ marginBottom: 8 }}>
           <Text>Type: {trigger.type}</Text>
           <Text>Text: {trigger.text}</Text>
