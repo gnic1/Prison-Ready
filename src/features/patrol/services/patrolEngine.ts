@@ -134,12 +134,15 @@ export class PatrolEngine {
     this.stopTickLoop();
     await PatrolStorage.appendHistory(this.session);
     await PatrolStorage.clearActive();
-    PlayerProfileService.notePatrolCompleted({
-      chapterId: this.graph.id,
-      distanceMeters: this.session.distanceMeters,
-      finalStats: this.session.stats,
-      startStats: this.session.startStats,
-    }).catch(() => {});
+    const wasPartial = !!this.session.flags["session.partial"];
+    if (!wasPartial) {
+      PlayerProfileService.notePatrolCompleted({
+        chapterId: this.graph.id,
+        distanceMeters: this.session.distanceMeters,
+        finalStats: this.session.stats,
+        startStats: this.session.startStats,
+      }).catch(() => {});
+    }
     this.emit();
   }
 

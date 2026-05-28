@@ -36,6 +36,11 @@ const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Geor
 
 interface RouteParams {
   graphId: string;
+  partial?: boolean;
+  lengthMode?: 'minutes' | 'distance';
+  lengthMinutes?: number;
+  lengthDistance?: number;
+  lengthUnit?: 'km' | 'miles';
 }
 
 const DEFAULT_STANCES_BY_SKIN: Record<string, Stance[]> = {
@@ -170,7 +175,8 @@ export const PatrolStanceScreen: React.FC = () => {
           extraFlags.push(DailyPulseService.pulseFlag(graph.skin));
         }
       } catch {}
-      await patrolEngine.start(graph, startingStats, { stanceFlag: stance.flag, extraFlags });
+      const partialFlag = (route.params as RouteParams).partial ? ["session.partial"] : [];
+      await patrolEngine.start(graph, startingStats, { stanceFlag: stance.flag, extraFlags: [...extraFlags, ...partialFlag] });
       navigation.replace('PatrolHUD', { graphId: graph.id });
     } catch {
       setBusy(false);

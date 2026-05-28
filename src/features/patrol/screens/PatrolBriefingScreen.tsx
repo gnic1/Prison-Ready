@@ -1,10 +1,12 @@
-// PatrolBriefingScreen — chapter cover, briefing copy, "Begin Patrol" CTA.
-// Renders before the player starts walking. Requests permissions on demand.
+// PatrolBriefingScreen — Mission Detail.
+// Neighborhood Watch style: translucent street bg, level/clues/missions stat
+// row, redacted-text summary (to be revealed at debrief), and a single
+// BEGIN PATROL CTA that opens the mission length picker.
 
 import React from 'react';
 import {
   Alert,
-  Platform,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,19 +15,66 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Defs, LinearGradient as SvgGradient, Rect, Stop, Path, Circle, G } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { themes } from '../../../theme/themes';
+import NW from '../../../theme/uiTokens';
 import { findGraph } from '../content';
-import { PatrolStorage } from '../services/patrolStorage';
-import { DEFAULT_STATS } from '../types/storyGraph';
+import { PlayerProfileService } from '../services/playerProfileService';
+import { LedgerService } from '../services/ledgerService';
+import { graphsForSkin } from '../content';
 
-const MONO = Platform.select({ ios: 'Courier', android: 'monospace', default: 'Courier' });
-const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia' });
+const BG = require('../../../../assets/backgrounds/main_background.png');
 
 interface RouteParams {
   graphId: string;
+}
+
+// Words we redact in the summary so the player has to discover them in-walk.
+const REDACT_LIST = [
+  'Sandersons',
+  'Petrovs',
+  'Maple',
+  'Caldwell',
+  'Janelle',
+  'Mahoneys',
+];
+
+interface SegmentPart {
+  text: string;
+  redacted: boolean;
+}
+function buildSegments(line: string): SegmentPart[] {
+  const out: SegmentPart[] = [];
+  let i = 0;
+  while (i < line.length) {
+    let matched = false;
+    for (const word of REDACT_LIST) {
+      if (line.substr(i, word.length).toLowerCase() === word.toLowerCase()) {
+        out.push({ text: word, redacted: true });
+        i += word.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      // Accumulate non-redacted characters until next match candidate
+      let next = '';
+      while (i < line.length) {
+        let candidate = false;
+        for (const w of REDACT_LIST) {
+          if (line.substr(i, w.length).toLowerCase() === w.toLowerCase()) {
+            candidate = true;
+            break;
+          }
+        }
+        if (candidate) break;
+        next += line[i];
+        i++;
+      }
+      if (next.length) out.push({ text: next, redacted: false });
+    }
+  }
+  return out;
 }
 
 export const PatrolBriefingScreen: React.FC = () => {
@@ -37,380 +86,263 @@ export const PatrolBriefingScreen: React.FC = () => {
 
   if (!graph) {
     return (
-      <SafeAreaView style={styles.errorSafe}>
-        <Text style={styles.errorText}>Story graph not found.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.errorBtn}>
-          <Text style={styles.errorBtnLabel}>Back</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: NW.bgInk }}>
+        <Text style={{ color: NW.text, padding: 24 }}>Story graph not found.</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 16 }}>
+          <Text style={{ color: NW.blueLight, padding: 8 }}>Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  const theme = themes[graph.skin];
-  const accent = theme.colors.accent;
-  const accentGlow = theme.colors.accentGlow;
-  const screenGradient = theme.gradients.screen;
+  // Stats
+  const profile = PlayerProfileService.get();
+  const ledger = LedgerService.get();
+  const skinGraphs = graphsForSkin(graph.skin);
+  const totalChapters = skinGraphs.filter((g) => g.chapter < 90).length;
+  const completedChapters = profile.chaptersCompleted.length;
+  const cluesDiscovered = ledger.observations.length;
+  const level = Math.max(1, Math.floor(profile.lifetimeMeters / 1000) + 1);
 
   const handleBegin = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      // Request permission up front so the HUD doesn't have to.
-      if (Platform.OS !== 'web') {
-        const fg = await Location.requestForegroundPermissionsAsync();
-        if (fg.status !== 'granted') {
-          Alert.alert(
-            'Location required',
-            'The patrol uses your real movement to advance the story. Without location permission, beats can\u2019t fire.',
-            [{ text: 'OK' }],
-          );
-          setBusy(false);
-          return;
-        }
+      const fg = await Location.requestForegroundPermissionsAsync();
+      if (fg.status !== 'granted') {
+        Alert.alert(
+          'Location needed',
+          'Patrols depend on real GPS distance. Enable location access to continue.',
+        );
+        setBusy(false);
+        return;
       }
-      // If a session is already active for a different graph, clear it.
-      const existing = await PatrolStorage.loadActive();
-      if (existing && existing.graphId !== graph.id) {
-        await PatrolStorage.clearActive();
-      }
-      // Defer engine start to the stance ritual screen — the player's
-      // pre-walk stance choice modifies the starting stat sheet.
-      navigation.replace('PatrolStance', { graphId: graph.id });
-    } catch (err: any) {
-      Alert.alert('Could not start patrol', err?.message ?? 'Unknown error.');
+      navigation.navigate('PatrolMissionLength', { graphId: graph.id });
     } finally {
       setBusy(false);
     }
   };
 
-  const formatDistance = (m: number) =>
-    m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
-  const formatMins = (s: number) => `${Math.round(s / 60)} min`;
-
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={screenGradient}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView style={styles.safeFill} edges={['top', 'bottom']}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backLabel}>BACK</Text>
-          </TouchableOpacity>
-          <Text style={[styles.eyebrow, { color: accent }]}>{graph.subtitle}</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
+          <Text style={styles.backText}>{'‹'} BACK</Text>
+        </TouchableOpacity>
+        <Text style={styles.chapterTag}>CHAPTER {graph.chapter}</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.titleBlock}>
+          <Text style={styles.skin}>{graph.skin.toUpperCase()}</Text>
+          <Text style={styles.title}>{graph.title}</Text>
+          {graph.subtitle ? (
+            <Text style={styles.subtitle}>{graph.subtitle}</Text>
+          ) : null}
         </View>
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}
-        >
-          <ChapterCover skin={graph.skin} accent={accent} accentGlow={accentGlow} chapter={graph.chapter} title={graph.title} />
+        <View style={styles.bgPanel}>
+          <ImageBackground source={BG} style={styles.bgImg} resizeMode="cover">
+            <LinearGradient
+              colors={['rgba(7,16,29,0.55)', 'rgba(7,16,29,0.85)']}
+              style={StyleSheet.absoluteFill}
+            />
 
-          <View style={styles.briefingBlock}>
-            {graph.briefing.map((p, i) => (
-              <Text
-                key={i}
-                style={[styles.brief, { fontFamily: SERIF }, i > 0 && { marginTop: 12 }]}
-              >
-                {p}
-              </Text>
-            ))}
-          </View>
+            <View style={styles.statRow}>
+              <StatBlock label="LEVEL" value={String(level)} />
+              <StatBlock
+                label="CHAPTERS"
+                value={`${completedChapters} / ${totalChapters}`}
+              />
+              <StatBlock
+                label="CLUES"
+                value={`${cluesDiscovered}`}
+              />
+            </View>
 
-          <View style={[styles.estimateRow, { borderColor: `${accent}40` }]}>
-            <View style={styles.estimateItem}>
-              <Text style={styles.estimateLabel}>DISTANCE</Text>
-              <Text style={[styles.estimateValue, { color: accent }]}>
-                {formatDistance(graph.targetMeters)}
-              </Text>
-            </View>
-            <View style={[styles.estimateDiv, { backgroundColor: `${accent}40` }]} />
-            <View style={styles.estimateItem}>
-              <Text style={styles.estimateLabel}>DURATION</Text>
-              <Text style={[styles.estimateValue, { color: accent }]}>
-                {formatMins(graph.targetSeconds)}
-              </Text>
-            </View>
-            <View style={[styles.estimateDiv, { backgroundColor: `${accent}40` }]} />
-            <View style={styles.estimateItem}>
-              <Text style={styles.estimateLabel}>CHAPTER</Text>
-              <Text style={[styles.estimateValue, { color: accent }]}>
-                {String(graph.chapter).padStart(2, '0')}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.statsBlock, { borderColor: `${accent}40` }]}>
-            <Text style={[styles.statsTitle, { color: accent }]}>STARTING SHEET</Text>
-            <View style={styles.statsGrid}>
-              {([
-                ['Insight', DEFAULT_STATS.insight],
-                ['Vigilance', DEFAULT_STATS.vigilance],
-                ['Stamina', DEFAULT_STATS.stamina],
-                ['Resolve', DEFAULT_STATS.resolve],
-              ] as Array<[string, number]>).map(([label, value]) => (
-                <View key={label} style={styles.statCell}>
-                  <Text style={styles.statLabel}>{label.toUpperCase()}</Text>
-                  <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
-                </View>
+            <View style={styles.summaryBlock}>
+              <Text style={styles.summaryHeading}>BRIEFING</Text>
+              {graph.briefing.map((line, idx) => (
+                <Text key={idx} style={styles.summaryLine}>
+                  {buildSegments(line).map((seg, j) =>
+                    seg.redacted ? (
+                      <Text key={j} style={styles.redacted}>
+                        {' '}
+                        {seg.text.replace(/./g, '█')}{' '}
+                      </Text>
+                    ) : (
+                      <Text key={j}>{seg.text}</Text>
+                    ),
+                  )}
+                </Text>
               ))}
             </View>
-          </View>
-        </ScrollView>
 
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={handleBegin}
-          disabled={busy}
-          style={[styles.cta, { borderColor: accent, backgroundColor: `${accent}1A` }]}
-        >
-          <Text style={[styles.ctaLabel, { color: accent }]}>
-            {busy ? 'STARTING…' : 'BEGIN PATROL'}
-          </Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    </View>
-  );
-};
+            <Text style={styles.targetLine}>
+              TARGET &middot; {(graph.targetMeters / 1000).toFixed(1)} KM
+              {graph.targetSeconds
+                ? `  /  ${Math.round(graph.targetSeconds / 60)} MIN`
+                : ''}
+            </Text>
+          </ImageBackground>
+        </View>
 
-interface CoverProps {
-  skin: string;
-  accent: string;
-  accentGlow: string;
-  chapter: number;
-  title: string;
-}
-
-const ChapterCover: React.FC<CoverProps> = ({ skin, accent, accentGlow, chapter, title }) => {
-  // A skin-specific abstract cover. Prison Yard: chain-link diagonal lattice
-  // with a sodium-light orb. Other skins reuse the same SVG with re-tinted
-  // colors (acceptable for v1).
-  return (
-    <View style={[styles.cover, { borderColor: `${accent}55`, shadowColor: accent }]}>
-      <Svg width="100%" height={220} viewBox="0 0 320 220" preserveAspectRatio="xMidYMid slice">
-        <Defs>
-          <SvgGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#0a0a10" />
-            <Stop offset="100%" stopColor="#1a0e08" />
-          </SvgGradient>
-          <SvgGradient id="lamp" x1="0.5" y1="0" x2="0.5" y2="1">
-            <Stop offset="0%" stopColor={accent} stopOpacity={0.9} />
-            <Stop offset="100%" stopColor={accent} stopOpacity={0} />
-          </SvgGradient>
-        </Defs>
-        <Rect x={0} y={0} width={320} height={220} fill="url(#bg)" />
-        {/* Sodium lamp halo */}
-        <Circle cx={250} cy={50} r={70} fill="url(#lamp)" opacity={0.7} />
-        {/* Chain-link lattice */}
-        <G opacity={0.55}>
-          {Array.from({ length: 14 }).map((_, i) => (
-            <Path
-              key={`d1-${i}`}
-              d={`M -20 ${i * 22} L ${340} ${i * 22 - 200}`}
-              stroke={accentGlow}
-              strokeWidth={1}
-              strokeOpacity={0.5}
-            />
-          ))}
-          {Array.from({ length: 14 }).map((_, i) => (
-            <Path
-              key={`d2-${i}`}
-              d={`M -20 ${i * 22 - 80} L ${340} ${i * 22 + 120}`}
-              stroke={accentGlow}
-              strokeWidth={1}
-              strokeOpacity={0.5}
-            />
-          ))}
-        </G>
-        {/* Foreground bars */}
-        <G>
-          {[60, 130, 200, 270].map((x) => (
-            <Rect key={x} x={x} y={0} width={6} height={220} fill="#1a1410" />
-          ))}
-        </G>
-        {/* Chapter token */}
-        <G>
-          <Rect
-            x={20}
-            y={170}
-            width={64}
-            height={32}
-            rx={6}
-            fill="#0a0a10"
-            stroke={accent}
-            strokeWidth={1.2}
-          />
-        </G>
-      </Svg>
-      <View style={styles.coverOverlay}>
-        <Text style={[styles.coverChapter, { color: accent }]}>
-          {`CHAPTER ${String(chapter).padStart(2, '0')}`}
+        <Text style={styles.hint}>
+          Names redacted in the briefing get revealed as you discover them on the
+          walk and recap at debrief.
         </Text>
-        <Text style={[styles.coverTitle, { fontFamily: SERIF }]}>{title}</Text>
-        <Text style={[styles.coverSkin, { color: accent }]}>{skin.toUpperCase()}</Text>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.cta, busy ? styles.ctaBusy : null]}
+          onPress={handleBegin}
+          activeOpacity={0.85}
+          disabled={busy}
+        >
+          <Text style={styles.ctaText}>{busy ? 'CHECKING…' : 'BEGIN PATROL'}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
+const StatBlock: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <View style={styles.statBlock}>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#06080d' },
-  safeFill: { flex: 1, paddingHorizontal: 16 },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 6,
-    paddingBottom: 12,
-    gap: 12,
-  },
-  backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#2a2c34',
-    borderRadius: 8,
-  },
-  backLabel: {
-    color: '#888',
-    fontSize: 11,
-    letterSpacing: 1.4,
-    fontFamily: MONO,
-    fontWeight: '700',
-  },
-  eyebrow: {
-    flex: 1,
-    fontSize: 11,
-    letterSpacing: 1.6,
-    fontFamily: MONO,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  body: { paddingBottom: 24, gap: 16 },
-  cover: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    borderWidth: 1,
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-    backgroundColor: '#0a0a10',
-  },
-  coverOverlay: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    bottom: 16,
-  },
-  coverChapter: {
-    fontSize: 12,
-    letterSpacing: 1.6,
-    fontFamily: MONO,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  coverTitle: {
-    fontSize: 30,
-    color: '#F2F2F0',
-    fontWeight: '700',
-    lineHeight: 34,
-  },
-  coverSkin: {
-    marginTop: 6,
-    fontSize: 10,
-    letterSpacing: 2,
-    fontFamily: MONO,
-    fontWeight: '700',
-    opacity: 0.85,
-  },
-  briefingBlock: {
-    backgroundColor: 'rgba(10,12,16,0.6)',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  brief: {
-    color: '#EAE6DA',
-    fontSize: 16,
-    lineHeight: 23,
-  },
-  estimateRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(10,12,16,0.85)',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-  },
-  estimateItem: { flex: 1, alignItems: 'center' },
-  estimateDiv: { width: 1 },
-  estimateLabel: {
-    fontSize: 10,
-    letterSpacing: 1.2,
-    fontFamily: MONO,
-    color: '#888',
-    fontWeight: '700',
-  },
-  estimateValue: {
-    marginTop: 4,
-    fontSize: 18,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  statsBlock: {
-    backgroundColor: 'rgba(10,12,16,0.85)',
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
-  },
-  statsTitle: {
-    fontSize: 11,
-    letterSpacing: 1.6,
-    fontFamily: MONO,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCell: {
-    flexBasis: '46%',
-    flexGrow: 1,
+  root: { flex: 1, backgroundColor: NW.bgInk },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 8,
+    paddingTop: 44,
+    paddingHorizontal: 18,
+    paddingBottom: 10,
   },
-  statLabel: {
-    fontSize: 10,
-    letterSpacing: 1.2,
-    fontFamily: MONO,
-    color: '#aaa',
-    fontWeight: '700',
-  },
-  statValue: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  cta: {
-    borderWidth: 1.5,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  ctaLabel: {
-    fontSize: 14,
+  back: { paddingVertical: 6 },
+  backText: { color: NW.blueLight, fontSize: 12, letterSpacing: 1.5, fontWeight: '700' },
+  chapterTag: {
+    color: NW.blueLight,
+    fontSize: 11,
     letterSpacing: 2,
-    fontFamily: MONO,
     fontWeight: '800',
   },
-  errorSafe: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#06080d' },
-  errorText: { color: '#EAE6DA', marginBottom: 12, fontSize: 16 },
-  errorBtn: { borderWidth: 1, borderColor: '#888', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10 },
-  errorBtnLabel: { color: '#EAE6DA', letterSpacing: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 24 },
+  titleBlock: { paddingVertical: 10, paddingHorizontal: 4 },
+  skin: {
+    color: NW.blueLight,
+    fontSize: 11,
+    letterSpacing: 3,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  title: {
+    color: NW.text,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 1,
+    lineHeight: 30,
+  },
+  subtitle: {
+    color: NW.textMuted,
+    fontSize: 13,
+    marginTop: 6,
+    letterSpacing: 0.3,
+  },
+  bgPanel: {
+    marginTop: 14,
+    borderRadius: NW.radLg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: NW.stroke,
+    backgroundColor: NW.panel,
+  },
+  bgImg: { padding: 16 },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 14,
+  },
+  statBlock: {
+    flex: 1,
+    backgroundColor: 'rgba(7,16,29,0.55)',
+    borderRadius: NW.radSm,
+    borderWidth: 1,
+    borderColor: NW.strokeSoft,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  statValue: { color: NW.text, fontSize: 20, fontWeight: '800' },
+  statLabel: {
+    color: NW.blueLight,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    marginTop: 2,
+    fontWeight: '700',
+  },
+  summaryBlock: {
+    marginBottom: 14,
+  },
+  summaryHeading: {
+    color: NW.blueLight,
+    fontSize: 11,
+    letterSpacing: 2.5,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  summaryLine: {
+    color: NW.text,
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  redacted: {
+    backgroundColor: '#000',
+    color: '#000',
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  targetLine: {
+    color: NW.warning,
+    fontSize: 11,
+    letterSpacing: 2,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  hint: {
+    color: NW.textMuted,
+    fontSize: 11,
+    marginTop: 14,
+    paddingHorizontal: 6,
+    lineHeight: 17,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingBottom: 22,
+    paddingTop: 8,
+  },
+  cta: {
+    backgroundColor: NW.blue,
+    borderRadius: 36,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: NW.blueLight,
+  },
+  ctaBusy: { opacity: 0.6 },
+  ctaText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 2,
+  },
 });
+
+export default PatrolBriefingScreen;

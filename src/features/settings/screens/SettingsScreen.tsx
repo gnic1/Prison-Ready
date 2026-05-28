@@ -1,148 +1,424 @@
+// SettingsScreen — vertical-tab drill-in matching the style sheet mockup.
+// Left rail: GENERAL / AUDIO / NOTIFICATIONS / ACCOUNT. Right pane: rows of
+// settings (label + control). Bottom: RESET + SAVE CHANGES buttons.
+// Sits on top of the neighborhood background image with a dark panel chrome.
+
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
-import { themes, AppThemeKey } from '../../../theme/themes';
-import { AuthStorageService, AuthState, defaultAuthState } from '../../auth/services/authStorageService';
-import { UserPreferences, UserPreferencesService, defaultUserPreferences } from '../../missions/services/userPreferencesService';
+import NW from '../../../theme/uiTokens';
+import {
+  UserPreferences,
+  UserPreferencesService,
+  defaultUserPreferences,
+} from '../../missions/services/userPreferencesService';
+
+const BG = require('../../../../assets/backgrounds/home_neighborhood.png');
+
+type TabKey = 'GENERAL' | 'AUDIO' | 'NOTIFICATIONS' | 'ACCOUNT';
+const TABS: TabKey[] = ['GENERAL', 'AUDIO', 'NOTIFICATIONS', 'ACCOUNT'];
+
+interface RowProps {
+  label: string;
+  control: React.ReactNode;
+}
+const Row: React.FC<RowProps> = ({ label, control }) => (
+  <View style={styles.row}>
+    <Text style={styles.rowLabel}>{label}</Text>
+    <View style={styles.rowControl}>{control}</View>
+  </View>
+);
+
+interface UnitsToggleProps {
+  value: 'imperial' | 'metric';
+  onChange: (v: 'imperial' | 'metric') => void;
+}
+const UnitsToggle: React.FC<UnitsToggleProps> = ({ value, onChange }) => (
+  <View style={styles.unitsWrap}>
+    {(['imperial', 'metric'] as const).map((u) => (
+      <TouchableOpacity
+        key={u}
+        onPress={() => onChange(u)}
+        style={[
+          styles.unitsBtn,
+          value === u ? styles.unitsBtnActive : null,
+        ]}
+        activeOpacity={0.8}
+      >
+        <Text
+          style={[
+            styles.unitsLabel,
+            value === u ? styles.unitsLabelActive : null,
+          ]}
+        >
+          {u.toUpperCase()}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
 
 export default function SettingsScreen() {
-  const navigation = useNavigation<any>();
-  const [authState, setAuthState] = React.useState<AuthState>(defaultAuthState);
+  const [active, setActive] = React.useState<TabKey>('GENERAL');
   const [prefs, setPrefs] = React.useState<UserPreferences>(defaultUserPreferences);
+  const [vibration, setVibration] = React.useState(true);
+  const [tutorialHints, setTutorialHints] = React.useState(true);
+  const [units, setUnits] = React.useState<'imperial' | 'metric'>('imperial');
+  const [cloudSave, setCloudSave] = React.useState(true);
+  const [pushNotifs, setPushNotifs] = React.useState(true);
+  const [sound, setSound] = React.useState(true);
+  const [voiceVolume, setVoiceVolume] = React.useState(true);
 
   React.useEffect(() => {
-    let mounted = true;
-    Promise.all([
-      AuthStorageService.loadState(),
-      UserPreferencesService.getPreferences(),
-    ]).then(([state, nextPrefs]) => {
-      if (!mounted) {
-        return;
-      }
-      setAuthState(state);
-      setPrefs(nextPrefs);
-    });
-    const unsubscribe = AuthStorageService.subscribe(setAuthState);
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
+    UserPreferencesService.getPreferences()
+      .then(setPrefs)
+      .catch(() => {});
   }, []);
 
-  const theme = themes[authState.selectedTheme];
-
-  const handleThemeChange = async (themeKey: AppThemeKey) => {
-    await AuthStorageService.updateActiveState({ selectedTheme: themeKey });
+  const onReset = () => {
+    setVibration(true);
+    setTutorialHints(true);
+    setUnits('imperial');
+    setCloudSave(true);
+    setPushNotifs(true);
+    setSound(true);
+    setVoiceVolume(true);
   };
 
-  const handleSignOut = async () => {
-    await AuthStorageService.signOut();
-    await UserPreferencesService.resetPreferences();
+  const onSave = () => {
+    // Persist what we actually have storage for; the rest is in-memory for now.
+    UserPreferencesService.savePreferences({
+      ...prefs,
+    }).catch(() => {});
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={theme.gradients.screen} style={StyleSheet.absoluteFill} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>SETTINGS //</Text>
-        <Text style={styles.title}>Adjust the shell tone and review the defaults driving your runs.</Text>
+    <View style={styles.root}>
+      <ImageBackground source={BG} style={StyleSheet.absoluteFill} resizeMode="cover">
+        <LinearGradient
+          colors={['rgba(7,16,29,0.35)', 'rgba(7,16,29,0.72)']}
+          style={StyleSheet.absoluteFill}
+        />
+      </ImageBackground>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Theme</Text>
-          {(['prison', 'neighborhood', 'theyreHere'] as AppThemeKey[]).map((themeKey) => (
-            <TouchableOpacity key={themeKey} onPress={() => handleThemeChange(themeKey)} style={[styles.row, authState.selectedTheme === themeKey && { borderColor: themes[themeKey].colors.accent }]}>
-              <Text style={styles.rowTitle}>{themes[themeKey].label}</Text>
-              <Text style={styles.rowBody}>{themes[themeKey].landing.eyebrow}</Text>
+      <View style={styles.titleBar}>
+        <Text style={styles.title}>OPTIONS</Text>
+      </View>
+
+      <View style={styles.panel}>
+        <View style={styles.rail}>
+          {TABS.map((t) => (
+            <TouchableOpacity
+              key={t}
+              activeOpacity={0.85}
+              onPress={() => setActive(t)}
+              style={[styles.railTab, active === t ? styles.railTabActive : null]}
+            >
+              <Text
+                style={[
+                  styles.railText,
+                  active === t ? styles.railTextActive : null,
+                ]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Field Defaults</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Mission Style</Text>
-            <Text style={styles.rowBody}>{prefs.preferredMissionStyle}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Goal Mode</Text>
-            <Text style={styles.rowBody}>{prefs.goalType === 'distance' ? 'Distance-led' : 'Time-led'}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Route Mode</Text>
-            <Text style={styles.rowBody}>{prefs.missionMode === 'outside' ? 'Outside route tracking' : 'Treadmill simulation'}</Text>
-          </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Missions', { screen: 'Artifacts' })} style={styles.row}>
-            <Text style={styles.rowTitle}>Open Evidence Locker</Text>
-            <Text style={styles.rowBody}>Jump straight to recovered artifacts and mission evidence from here.</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.content}>
+          {active === 'GENERAL' && (
+            <>
+              <Row
+                label="LANGUAGE"
+                control={
+                  <View style={styles.dropdown}>
+                    <Text style={styles.dropdownText}>ENGLISH</Text>
+                    <Text style={styles.caret}>v</Text>
+                  </View>
+                }
+              />
+              <Row
+                label="VIBRATION"
+                control={
+                  <Switch
+                    value={vibration}
+                    onValueChange={setVibration}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={vibration ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+              <Row
+                label="TUTORIAL HINTS"
+                control={
+                  <Switch
+                    value={tutorialHints}
+                    onValueChange={setTutorialHints}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={tutorialHints ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+              <Row
+                label="UNITS"
+                control={<UnitsToggle value={units} onChange={setUnits} />}
+              />
+              <Row
+                label="CLOUD SAVE"
+                control={
+                  <Switch
+                    value={cloudSave}
+                    onValueChange={setCloudSave}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={cloudSave ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+            </>
+          )}
 
-        <TouchableOpacity onPress={handleSignOut} style={[styles.row, styles.signOutRow]}>
-          <Text style={styles.signOutText}>Sign Out</Text>
+          {active === 'AUDIO' && (
+            <>
+              <Row
+                label="SOUND EFFECTS"
+                control={
+                  <Switch
+                    value={sound}
+                    onValueChange={setSound}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={sound ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+              <Row
+                label="NARRATOR VOICE"
+                control={
+                  <Switch
+                    value={voiceVolume}
+                    onValueChange={setVoiceVolume}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={voiceVolume ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+              <Text style={styles.hint}>
+                Voice pack selection arrives with the podcast feature.
+              </Text>
+            </>
+          )}
+
+          {active === 'NOTIFICATIONS' && (
+            <>
+              <Row
+                label="PUSH NOTIFICATIONS"
+                control={
+                  <Switch
+                    value={pushNotifs}
+                    onValueChange={setPushNotifs}
+                    trackColor={{ false: '#2b313b', true: NW.blue }}
+                    thumbColor={pushNotifs ? NW.blueLight : '#cfd6e2'}
+                  />
+                }
+              />
+              <Text style={styles.hint}>
+                Pulse windows and raid alerts use this channel.
+              </Text>
+            </>
+          )}
+
+          {active === 'ACCOUNT' && (
+            <>
+              <Text style={styles.hint}>
+                Sign-in and cloud account are coming with the backend hookup.
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.btnReset} onPress={onReset} activeOpacity={0.85}>
+          <Text style={styles.btnResetText}>RESET</Text>
         </TouchableOpacity>
-      </ScrollView>
+        <TouchableOpacity style={styles.btnSave} onPress={onSave} activeOpacity={0.85}>
+          <Text style={styles.btnSaveText}>SAVE CHANGES</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20, paddingTop: 68, paddingBottom: 120 },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2.1,
-    marginBottom: 12,
+  root: { flex: 1, backgroundColor: NW.bgInk, paddingTop: 44 },
+  titleBar: {
+    paddingHorizontal: 18,
+    paddingBottom: 10,
   },
   title: {
-    color: '#F2F2EE',
-    fontSize: 28,
-    lineHeight: 34,
+    color: NW.text,
+    fontSize: 22,
     fontWeight: '800',
-    marginBottom: 18,
+    letterSpacing: 4,
   },
-  card: {
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: 'rgba(14,18,24,0.78)',
+  panel: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(16,27,41,0.55)',
+    marginHorizontal: 14,
+    borderRadius: NW.radLg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    marginBottom: 14,
+    borderColor: NW.stroke,
+    overflow: 'hidden',
   },
-  cardTitle: {
-    color: '#EDEFF6',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-    marginBottom: 12,
+  rail: {
+    width: 120,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(11,23,42,0.85)',
+    borderRightWidth: 1,
+    borderRightColor: NW.strokeSoft,
+  },
+  railTab: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: NW.radSm,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  railTabActive: {
+    backgroundColor: 'rgba(30,144,255,0.22)',
+    borderColor: NW.blue,
+  },
+  railText: {
+    color: NW.textMuted,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.6,
+  },
+  railTextActive: {
+    color: NW.text,
+  },
+  content: {
+    flex: 1,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
   },
   row: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    padding: 14,
-    marginBottom: 10,
-    backgroundColor: 'rgba(6,9,16,0.72)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: NW.strokeSoft,
   },
-  rowTitle: {
-    color: '#FAFAF4',
-    fontSize: 16,
+  rowLabel: {
+    flex: 1,
+    color: NW.text,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: 4,
+    letterSpacing: 1.2,
   },
-  rowBody: {
-    color: '#B6BCCB',
-    lineHeight: 19,
-  },
-  signOutRow: {
-    marginTop: 8,
+  rowControl: {
+    flexShrink: 0,
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  signOutText: {
-    color: '#FFD7B8',
-    fontSize: 15,
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: NW.strokeSoft,
+    borderRadius: NW.radSm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  dropdownText: {
+    color: NW.text,
+    fontSize: 12,
     fontWeight: '700',
+    letterSpacing: 1.2,
+    marginRight: 6,
+  },
+  caret: {
+    color: NW.blueLight,
+    fontSize: 11,
+    transform: [{ scaleY: 0.85 }],
+  },
+  unitsWrap: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: NW.radSm,
+    padding: 2,
+  },
+  unitsBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: NW.radSm - 2,
+  },
+  unitsBtnActive: {
+    backgroundColor: NW.blue,
+  },
+  unitsLabel: {
+    color: NW.textMuted,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  unitsLabelActive: {
+    color: '#ffffff',
+  },
+  hint: {
+    color: NW.textMuted,
+    fontSize: 12,
+    marginTop: 12,
+    lineHeight: 18,
+  },
+  footer: {
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 20,
+    gap: 12,
+  },
+  btnReset: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: NW.radMd,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: NW.strokeSoft,
+    alignItems: 'center',
+  },
+  btnResetText: {
+    color: NW.text,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 2,
+  },
+  btnSave: {
+    flex: 1.6,
+    paddingVertical: 14,
+    borderRadius: NW.radMd,
+    backgroundColor: NW.warning,
+    borderWidth: 1,
+    borderColor: '#ffb02e',
+    alignItems: 'center',
+  },
+  btnSaveText: {
+    color: '#1a0d00',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
 });

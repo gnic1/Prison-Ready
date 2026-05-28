@@ -53,9 +53,7 @@ export const ProfileScreen: React.FC = () => {
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.header}>
           <Text style={styles.title}>PROFILE</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-            <Text style={styles.closeX}>×</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -123,6 +121,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(138,191,255,0.22)',
   },
   title: { color: C.blueLight, fontSize: 18, fontWeight: '800', letterSpacing: 2 },
+  headerSpacer: { width: 0 },
   closeBtn: {
     width: 36,
     height: 36,

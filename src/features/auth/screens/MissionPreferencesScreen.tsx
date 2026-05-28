@@ -71,6 +71,7 @@ export default function MissionPreferencesScreen() {
           ))}
         </View>
         <View style={styles.segmentRow}>
+          <Text style={{ color: '#a8b6c8', fontSize: 11, marginBottom: 8, fontStyle: 'italic' }}>You can switch this each session in the mission length picker.</Text>
           {['outside', 'treadmill'].map((item) => (
             <TouchableOpacity key={item} style={[styles.segment, missionMode === item && styles.segmentActive]} onPress={() => { setMissionMode(item as MissionMode); setPathMode('custom'); }}>
               <Text style={[styles.segmentText, missionMode === item && styles.segmentTextActive]}>{item === 'outside' ? 'OUTSIDE' : 'TREADMILL'}</Text>

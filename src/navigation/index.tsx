@@ -11,6 +11,7 @@ import DietTrackerPlaceholderScreen from '../features/diet/screens/DietTrackerPl
 import { AuthState, AuthStorageService, defaultAuthState } from '../features/auth/services/authStorageService';
 import ReviewLabScreen from '../features/review/screens/ReviewLabScreen';
 import { PatrolBriefingScreen } from '../features/patrol/screens/PatrolBriefingScreen';
+import { PatrolMissionLengthScreen } from '../features/patrol/screens/PatrolMissionLengthScreen';
 import { PatrolStanceScreen } from '../features/patrol/screens/PatrolStanceScreen';
 import { PatrolHUDScreen } from '../features/patrol/screens/PatrolHUDScreen';
 import { PatrolDebriefScreen } from '../features/patrol/screens/PatrolDebriefScreen';
@@ -44,6 +45,7 @@ function AppStack() {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="DietTracker" component={DietTrackerPlaceholderScreen} />
       <Stack.Screen name="PatrolBriefing" component={PatrolBriefingScreen} />
+      <Stack.Screen name="PatrolMissionLength" component={PatrolMissionLengthScreen} />
       <Stack.Screen name="PatrolStance" component={PatrolStanceScreen} />
       <Stack.Screen name="PatrolHUD" component={PatrolHUDScreen} />
       <Stack.Screen name="PatrolDebrief" component={PatrolDebriefScreen} />
@@ -87,13 +89,24 @@ export default function AppNavigator() {
     };
   }, []);
 
+  // Phase 1: branded splash while we load persisted state + minimum dwell.
   if (!bootstrapped || !splashDone) {
     return <LoadingScreen onFinish={() => setSplashDone(true)} />;
   }
 
+  // Phase 2: onboarding flow for first-time users.
+  if (!authState.onboardingCompleted) {
+    return (
+      <NavigationContainer>
+        <AuthStack />
+      </NavigationContainer>
+    );
+  }
+
+  // Phase 3: the app proper — HomeScreen IS the landing page now.
   return (
     <NavigationContainer>
-      {authState.onboardingCompleted ? <AppStack /> : <AuthStack />}
+      <AppStack />
     </NavigationContainer>
   );
 }

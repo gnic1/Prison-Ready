@@ -1,22 +1,17 @@
+// GameBottomNav — Neighborhood Watch styled bottom tab bar.
+// Vertical icon + uppercase label, blue ramp on the active tab,
+// dark panel chrome above with a subtle top border.
+
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { themes } from '../theme/themes';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const TAB_ICONS: Record<string, string> = {
-  Home: '⌂',
-  Missions: '✦',
-  Badges: '◆',
-  Progress: '◎',
-};
-
-const TAB_LABELS: Record<string, string> = {
-  Home: 'Base',
-  Missions: 'Missions',
-  Badges: 'Badges',
-  Progress: 'Map',
-};
+import NW from '../theme/uiTokens';
+import {
+  HomeIcon,
+  ProfileIcon,
+  LedgerIcon,
+  SettingsIcon,
+} from './TabIcons';
 
 interface GameBottomNavProps {
   tabs: string[];
@@ -25,119 +20,95 @@ interface GameBottomNavProps {
   themeKey?: string;
 }
 
-export function GameBottomNav({ tabs, activeTab, onTabPress, themeKey = 'prison' }: GameBottomNavProps) {
-  const theme = themes[themeKey];
-  const insets = useSafeAreaInsets();
+const LABEL: Record<string, string> = {
+  Home: 'HOME',
+  Profile: 'PROFILE',
+  Ledger: 'LEDGER',
+  Settings: 'SETTINGS',
+};
+
+const ICON: Record<string, React.FC<{ size?: number; color?: string }>> = {
+  Home: HomeIcon,
+  Profile: ProfileIcon,
+  Ledger: LedgerIcon,
+  Settings: SettingsIcon,
+};
+
+export const GameBottomNav: React.FC<GameBottomNavProps> = ({
+  tabs,
+  activeTab,
+  onTabPress,
+}) => {
+  let insetsBottom = 0;
+  try {
+    insetsBottom = useSafeAreaInsets().bottom;
+  } catch {
+    insetsBottom = Platform.OS === 'ios' ? 24 : 8;
+  }
+
   return (
-    <View
-      style={[
-        styles.nav,
-        {
-          backgroundColor: 'rgba(24,24,28,0.98)',
-          borderTopColor: 'transparent',
-          shadowColor: theme.colors.prisonOrange,
-          shadowOpacity: 0.18,
-          shadowRadius: 22,
-          elevation: 18,
-          bottom: Math.max(insets.bottom, 12),
-        },
-      ]}
-    >
-      <LinearGradient
-        colors={theme.gradients.dock}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.topRule} />
-      {tabs.map(tabName => {
-        const isActive = activeTab === tabName;
-        const icon = TAB_ICONS[tabName] || '•';
-        return (
-          <TouchableOpacity
-            key={tabName}
-            style={[styles.tab, isActive && styles.activeTab]}
-            onPress={() => onTabPress(tabName)}
-          >
-            {isActive ? <View style={styles.activeUnderline} /> : null}
-            <Text
-              style={{
-                fontSize: isActive ? 23 : 20,
-                color: isActive ? theme.colors.accent : theme.colors.textSecondary,
-                fontWeight: isActive ? '700' : '500',
-                textShadowColor: isActive ? theme.colors.accentGlow : 'transparent',
-                textShadowRadius: isActive ? 16 : 0,
-                textShadowOffset: isActive ? { width: 0, height: 2 } : undefined,
-                marginBottom: 1,
-              }}
+    <View style={[styles.wrap, { paddingBottom: Math.max(insetsBottom, 6) }]}>
+      <View style={styles.row}>
+        {tabs.map((tab) => {
+          const Icon = ICON[tab];
+          const active = tab === activeTab;
+          if (!Icon) {
+            return null;
+          }
+          return (
+            <TouchableOpacity
+              key={tab}
+              activeOpacity={0.7}
+              onPress={() => onTabPress(tab)}
+              style={[styles.tab, active ? styles.tabActive : null]}
             >
-              {icon}
-            </Text>
-            <Text
-              style={{
-                color: isActive ? theme.colors.accent : theme.colors.textSecondary,
-                fontWeight: isActive ? '700' : '500',
-                fontSize: isActive ? 9 : 8,
-                marginTop: 2,
-                textShadowColor: isActive ? theme.colors.accentGlow : 'transparent',
-                textShadowRadius: isActive ? 8 : 0,
-                letterSpacing: 1.4,
-                textTransform: 'uppercase',
-                fontFamily: 'monospace',
-              }}
-            >
-              {TAB_LABELS[tabName] || tabName}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              <Icon size={22} color={active ? NW.text : NW.blueLight} />
+              <Text style={[styles.label, active ? styles.labelActive : null]}>
+                {LABEL[tab] ?? tab.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  nav: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    height: 72,
-    borderTopWidth: 0,
-    borderTopColor: 'transparent',
-    shadowColor: undefined,
-    shadowOffset: undefined,
-    shadowOpacity: undefined,
-    shadowRadius: undefined,
-    elevation: 0,
-    borderRadius: 28,
-    overflow: 'hidden',
+  wrap: {
+    backgroundColor: 'rgba(7,16,29,0.97)',
+    borderTopWidth: 1,
+    borderTopColor: NW.strokeSoft,
   },
-  topRule: {
-    position: 'absolute',
-    top: 0,
-    left: 14,
-    right: 14,
-    height: 1,
-    backgroundColor: 'rgba(0,200,160,0.16)',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingHorizontal: 8,
+    paddingTop: 8,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    position: 'relative',
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    borderRadius: NW.radSm,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  activeTab: {
-    // Optionally add more visual cues for active tab
+  tabActive: {
+    backgroundColor: 'rgba(30,144,255,0.18)',
+    borderColor: NW.blue,
   },
-  activeUnderline: {
-    position: 'absolute',
-    top: 0,
-    width: 28,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: '#FF6A00',
+  label: {
+    color: NW.textMuted,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.4,
+    marginTop: 4,
+  },
+  labelActive: {
+    color: NW.text,
   },
 });
+
+export default GameBottomNav;
