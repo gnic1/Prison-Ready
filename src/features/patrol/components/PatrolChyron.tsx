@@ -7,6 +7,7 @@ interface PatrolChyronProps {
   eyebrow?: string;
   distanceMeters: number;
   elapsedSeconds: number;
+  countdownSeconds?: number;
   accent: string;
   borderColor: string;
 }
@@ -26,21 +27,29 @@ export const PatrolChyron: React.FC<PatrolChyronProps> = ({
   eyebrow,
   distanceMeters,
   elapsedSeconds,
+  countdownSeconds,
   accent,
   borderColor,
-}) => (
-  <View style={[styles.wrap, { borderColor }]}>
-    <View style={styles.row}>
-      <Text style={[styles.eyebrow, { color: accent }]}>
-        {eyebrow ?? 'PATROL //'}
-      </Text>
-      <View style={styles.spacer} />
-      <Text style={styles.metric}>{formatDistance(distanceMeters)}</Text>
-      <View style={[styles.dot, { backgroundColor: borderColor }]} />
-      <Text style={styles.metric}>{formatTime(elapsedSeconds)}</Text>
+}) => {
+  const isCountdown = typeof countdownSeconds === 'number';
+  const seconds = isCountdown ? Math.max(0, countdownSeconds as number) : elapsedSeconds;
+  const timeLabel = isCountdown ? formatTime(seconds) : formatTime(seconds);
+  return (
+    <View style={[styles.wrap, { borderColor }]}>
+      <View style={styles.row}>
+        <Text style={[styles.eyebrow, { color: accent }]}>
+          {eyebrow ?? 'PATROL //'}
+        </Text>
+        <View style={styles.spacer} />
+        <Text style={styles.metric}>{formatDistance(distanceMeters)}</Text>
+        <View style={[styles.dot, { backgroundColor: borderColor }]} />
+        <Text style={styles.metric}>
+          {isCountdown ? '▼ ' : ''}{timeLabel}
+        </Text>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   wrap: {

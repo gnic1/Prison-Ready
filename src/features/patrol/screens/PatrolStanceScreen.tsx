@@ -100,7 +100,14 @@ export const PatrolStanceScreen: React.FC = () => {
         stanceFlag: stance.flag,
         extraFlags: [...extraFlags, ...partialFlag],
       });
-      navigation.replace('PatrolHUD', { graphId: graph.id });
+      navigation.replace('PatrolHUD', {
+        graphId: graph.id,
+        lengthMode: params.lengthMode,
+        lengthMinutes: params.lengthMinutes,
+        lengthDistance: params.lengthDistance,
+        lengthUnit: params.lengthUnit,
+        partial: params.partial,
+      });
     } catch {
       setBusy(false);
     }

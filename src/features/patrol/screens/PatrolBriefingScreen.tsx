@@ -22,6 +22,7 @@ import { findGraph } from '../content';
 import { PlayerProfileService } from '../services/playerProfileService';
 import { LedgerService } from '../services/ledgerService';
 import { graphsForSkin } from '../content';
+import { BriefingAudioService } from '../services/briefingAudioService';
 
 const BG = require('../../../../assets/backgrounds/main_background.png');
 
@@ -161,7 +162,12 @@ export const PatrolBriefingScreen: React.FC = () => {
             </View>
 
             <View style={styles.summaryBlock}>
-              <Text style={styles.summaryHeading}>BRIEFING</Text>
+              <View style={styles.briefingHeader}>
+                <Text style={styles.summaryHeading}>BRIEFING</Text>
+                {BriefingAudioService.hasAudioFor(graph.id) ? (
+                  <BriefingPlayButton graphId={graph.id} />
+                ) : null}
+              </View>
               {graph.briefing.map((line, idx) => (
                 <Text key={idx} style={styles.summaryLine}>
                   {buildSegments(line).map((seg, j) =>
@@ -204,6 +210,29 @@ export const PatrolBriefingScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
     </View>
+  );
+};
+
+const BriefingPlayButton: React.FC<{ graphId: string }> = ({ graphId }) => {
+  const [playing, setPlaying] = React.useState(false);
+  React.useEffect(() => {
+    return () => {
+      BriefingAudioService.stop().catch(() => {});
+    };
+  }, []);
+  const toggle = async () => {
+    if (playing) {
+      await BriefingAudioService.stop();
+      setPlaying(false);
+    } else {
+      await BriefingAudioService.play(graphId);
+      setPlaying(true);
+    }
+  };
+  return (
+    <TouchableOpacity onPress={toggle} style={styles.audioBtn} activeOpacity={0.85}>
+      <Text style={styles.audioBtnText}>{playing ? '◼ STOP' : '▶ PLAY'}</Text>
+    </TouchableOpacity>
   );
 };
 
@@ -289,6 +318,26 @@ const styles = StyleSheet.create({
   },
   summaryBlock: {
     marginBottom: 14,
+  },
+  briefingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  audioBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#1e90ff',
+    backgroundColor: 'rgba(30,144,255,0.20)',
+  },
+  audioBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   summaryHeading: {
     color: NW.blueLight,

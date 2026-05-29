@@ -11,6 +11,16 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+
+// Lazy-require expo-keep-awake so the module can be missing in dev without
+// failing the type-check. On device it's installed (peer dep of expo).
+let useKeepAwake: () => void = () => {};
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  useKeepAwake = require('expo-keep-awake').useKeepAwake;
+} catch {
+  // module not present — no-op so the screen still renders
+}
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +58,7 @@ export const PatrolHUDScreen: React.FC = () => {
   const [session, setSession] = React.useState<PatrolSession | null>(
     patrolEngine.getSession(),
   );
+  useKeepAwake();
   const [now, setNow] = React.useState<number>(Date.now());
   const [permError, setPermError] = React.useState<string | null>(null);
   const [muted, setMuted] = React.useState<boolean>(TTSService.isMuted());
@@ -230,6 +241,23 @@ export const PatrolHUDScreen: React.FC = () => {
   const borderColor = `${accent}40`;
 
   const elapsedSeconds = session ? (now - session.startedAt) / 1000 : 0;
+
+  // Length-mode handling: if the player chose a TIME goal on the length
+  // picker, we count down and end the patrol when the timer hits 0.
+  const routeParams: any = (route?.params ?? {}) as any;
+  const isTimeMode = routeParams.lengthMode === 'minutes' && typeof routeParams.lengthMinutes === 'number';
+  const totalSeconds = isTimeMode ? (routeParams.lengthMinutes as number) * 60 : 0;
+  const remainingSeconds = isTimeMode ? Math.max(0, totalSeconds - elapsedSeconds) : 0;
+
+  React.useEffect(() => {
+    if (!isTimeMode || !session || session.status !== 'active') return;
+    if (remainingSeconds > 0) return;
+    // Time is up — close the patrol.
+    TTSService.cancelAll();
+    patrolEngine.complete().catch(() => {});
+    navigation.replace('PatrolDebrief', { graphId: graph.id });
+  }, [isTimeMode, remainingSeconds, session, graph.id, navigation]);
+
   const node: StoryNode | undefined = session
     ? graph.nodes[session.currentNodeId]
     : undefined;
@@ -365,6 +393,7 @@ export const PatrolHUDScreen: React.FC = () => {
               eyebrow={eyebrow}
               distanceMeters={session?.distanceMeters ?? 0}
               elapsedSeconds={elapsedSeconds}
+              countdownSeconds={isTimeMode ? remainingSeconds : undefined}
               accent={accent}
               borderColor={borderColor}
             />
