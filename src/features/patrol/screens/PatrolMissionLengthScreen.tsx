@@ -284,10 +284,9 @@ const styles = StyleSheet.create({
   },
   okBody: { color: NW.text, fontSize: 13, lineHeight: 18 },
   footer: {
-    marginTop: 'auto',
     paddingHorizontal: 16,
-    paddingBottom: 22,
-    paddingTop: 8,
+    paddingTop: 18,
+    paddingBottom: 12,
   },
   cta: {
     backgroundColor: NW.blue,

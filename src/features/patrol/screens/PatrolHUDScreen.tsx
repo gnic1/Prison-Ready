@@ -225,8 +225,8 @@ export const PatrolHUDScreen: React.FC = () => {
   }
 
   const theme = themes[graph.skin];
-  const accent = theme.colors.accent;
-  const accentGlow = theme.colors.accentGlow;
+  const accent = '#1e90ff';
+  const accentGlow = '#a8c8ff';
   const borderColor = `${accent}40`;
 
   const elapsedSeconds = session ? (now - session.startedAt) / 1000 : 0;
@@ -414,15 +414,15 @@ export const PatrolHUDScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#06080d' },
-  safe: { flex: 1, backgroundColor: '#06080d' },
+  root: { flex: 1, backgroundColor: '#03050c' },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   safeFill: { flex: 1, paddingHorizontal: 14 },
   topRow: { flexDirection: 'row', alignItems: 'stretch', gap: 8, marginTop: 6 },
   iconBtn: {
     width: 44,
     borderRadius: 14,
     borderWidth: 1,
-    backgroundColor: 'rgba(8,10,14,0.92)',
+    backgroundColor: 'rgba(7,16,29,0.92)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   abortLabel: { color: '#EAE6DA', fontSize: 22, fontWeight: '600' },
   permBanner: {
     marginTop: 8,
-    backgroundColor: 'rgba(20,12,5,0.92)',
+    backgroundColor: 'rgba(20,12,5,0.88)',
     borderWidth: 1,
     borderRadius: 12,
     paddingVertical: 8,
