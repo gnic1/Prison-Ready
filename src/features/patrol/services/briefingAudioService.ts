@@ -1,41 +1,47 @@
 // briefingAudioService — plays the optional MP3 narration for a chapter's
-// briefing. Lazy-requires expo-audio so the build doesn't fail when the
-// package isn't installed locally.
+// briefing. Fully lazy: nothing loads expo-audio or the asset at module load
+// time. Both are deferred until play() is actually called, so a problem with
+// the asset or native module can't take down the app at startup.
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-type ExpoAudio = any;
-let expoAudio: ExpoAudio | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  expoAudio = require('expo-audio');
-} catch {
-  // module not present — playback no-ops
-}
+type AudioSourceLoader = () => any;
 
-// Per-chapter audio sources. Add additional chapters here as audio is authored.
-const AUDIO_BY_CHAPTER: Record<string, any> = {
-  'neighborhood.ch01.wrongPorchLight': require('../../../../assets/audio/chapter1_briefing.mp3'),
+const AUDIO_LOADERS: Record<string, AudioSourceLoader> = {
+  'neighborhood.ch01.wrongPorchLight': () =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('../../../../assets/audio/chapter1_briefing.mp3'),
 };
+
+function tryLoadExpoAudio(): any | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('expo-audio');
+  } catch {
+    return null;
+  }
+}
 
 class BriefingAudioServiceImpl {
   private player: any = null;
-  private currentSource: any = null;
+  private currentLoaderKey: string | null = null;
 
   hasAudioFor(graphId: string): boolean {
-    return Boolean(AUDIO_BY_CHAPTER[graphId]);
+    return Boolean(AUDIO_LOADERS[graphId]);
   }
 
   async play(graphId: string): Promise<void> {
-    const source = AUDIO_BY_CHAPTER[graphId];
-    if (!source || !expoAudio) return;
+    const loader = AUDIO_LOADERS[graphId];
+    if (!loader) return;
+
+    const expoAudio = tryLoadExpoAudio();
+    if (!expoAudio) return;
 
     try {
-      if (this.currentSource !== source) {
+      if (this.currentLoaderKey !== graphId) {
         await this.stop();
-        // Use the imperative createAudioPlayer API which works outside hooks.
+        const source = loader();
         if (typeof expoAudio.createAudioPlayer === 'function') {
           this.player = expoAudio.createAudioPlayer(source);
-          this.currentSource = source;
+          this.currentLoaderKey = graphId;
         }
       }
       if (this.player) {
@@ -60,7 +66,7 @@ class BriefingAudioServiceImpl {
       }
     } catch {}
     this.player = null;
-    this.currentSource = null;
+    this.currentLoaderKey = null;
   }
 
   isPlaying(): boolean {
