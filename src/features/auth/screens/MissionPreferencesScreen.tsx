@@ -1,28 +1,36 @@
+// MissionPreferencesScreen — Neighborhood Watch reskin.
+// Player sets distance unit (km/miles) and surface (outside/treadmill) so the
+// app knows what kind of patrol they typically walk.
+
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { PrisonButton } from '../../../components/PrisonButton';
+import NW from '../../../theme/uiTokens';
 import { AuthStorageService } from '../services/authStorageService';
-import { GoalType, MissionMode, UserPreferencesService } from '../../missions/services/userPreferencesService';
+import {
+  GoalType,
+  MissionMode,
+  UserPreferencesService,
+} from '../../missions/services/userPreferencesService';
 
-type RecoPath = 'recommend' | 'custom';
+const BG = require('../../../../assets/backgrounds/main_background.png');
 
 export default function MissionPreferencesScreen() {
   const navigation = useNavigation<any>();
-  const [styleChoice, setStyleChoice] = React.useState<'guided' | 'balanced' | 'scout'>('balanced');
+  const [styleChoice, setStyleChoice] = React.useState<
+    'guided' | 'balanced' | 'scout'
+  >('balanced');
   const [distanceUnit, setDistanceUnit] = React.useState<'km' | 'miles'>('km');
   const [goalType, setGoalType] = React.useState<GoalType>('distance');
   const [missionMode, setMissionMode] = React.useState<MissionMode>('outside');
-  const [pathMode, setPathMode] = React.useState<RecoPath>('recommend');
-
-  const applyRecommendation = () => {
-    setStyleChoice('balanced');
-    setDistanceUnit('km');
-    setGoalType('distance');
-    setMissionMode('outside');
-    setPathMode('recommend');
-  };
 
   const finish = async () => {
     await UserPreferencesService.updatePreferences({
@@ -38,145 +46,189 @@ export default function MissionPreferencesScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['#090A0F', '#171826', '#1A130C']} style={StyleSheet.absoluteFill} />
-      <Text style={styles.eyebrow}>MISSION PREFERENCES //</Text>
-      <Text style={styles.title}>Choose how the app should guide your first run.</Text>
+    <View style={styles.root}>
+      <ImageBackground source={BG} style={StyleSheet.absoluteFill} resizeMode="cover">
+        <LinearGradient
+          colors={['rgba(7,16,29,0.50)', 'rgba(7,16,29,0.94)']}
+          style={StyleSheet.absoluteFill}
+        />
+      </ImageBackground>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Mission style</Text>
-        <View style={styles.segmentRow}>
-          {['guided', 'balanced', 'scout'].map((item) => (
-            <TouchableOpacity key={item} style={[styles.segment, styleChoice === item && styles.segmentActive]} onPress={() => { setStyleChoice(item as 'guided' | 'balanced' | 'scout'); setPathMode('custom'); }}>
-              <Text style={[styles.segmentText, styleChoice === item && styles.segmentTextActive]}>{item.toUpperCase()}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text style={styles.eyebrow}>YOUR DEFAULTS //</Text>
+        <Text style={styles.title}>How do you usually walk?</Text>
+        <Text style={styles.subtitle}>
+          These set sensible defaults. You can change them per session from the
+          mission length picker.
+        </Text>
 
-        <Text style={styles.sectionTitle}>Preferred distance unit</Text>
-        <View style={styles.segmentRow}>
-          {['km', 'miles'].map((item) => (
-            <TouchableOpacity key={item} style={[styles.segment, distanceUnit === item && styles.segmentActive]} onPress={() => { setDistanceUnit(item as 'km' | 'miles'); setPathMode('custom'); }}>
-              <Text style={[styles.segmentText, distanceUnit === item && styles.segmentTextActive]}>{item.toUpperCase()}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <View style={styles.panel}>
+          <Section label="DISTANCE UNIT">
+            <Segment
+              options={[
+                { value: 'km', label: 'KM' },
+                { value: 'miles', label: 'MILES' },
+              ]}
+              value={distanceUnit}
+              onChange={(v) => setDistanceUnit(v as 'km' | 'miles')}
+            />
+          </Section>
 
-        <Text style={styles.sectionTitle}>Mission defaults</Text>
-        <View style={styles.segmentRow}>
-          {['distance', 'minutes'].map((item) => (
-            <TouchableOpacity key={item} style={[styles.segment, goalType === item && styles.segmentActive]} onPress={() => { setGoalType(item as GoalType); setPathMode('custom'); }}>
-              <Text style={[styles.segmentText, goalType === item && styles.segmentTextActive]}>{item === 'minutes' ? 'TIME' : 'DISTANCE'}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.segmentRow}>
-          <Text style={{ color: '#a8b6c8', fontSize: 11, marginBottom: 8, fontStyle: 'italic' }}>You can switch this each session in the mission length picker.</Text>
-          {['outside', 'treadmill'].map((item) => (
-            <TouchableOpacity key={item} style={[styles.segment, missionMode === item && styles.segmentActive]} onPress={() => { setMissionMode(item as MissionMode); setPathMode('custom'); }}>
-              <Text style={[styles.segmentText, missionMode === item && styles.segmentTextActive]}>{item === 'outside' ? 'OUTSIDE' : 'TREADMILL'}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          <Section label="GOAL TYPE">
+            <Segment
+              options={[
+                { value: 'distance', label: 'DISTANCE' },
+                { value: 'minutes', label: 'TIME' },
+              ]}
+              value={goalType}
+              onChange={(v) => setGoalType(v as GoalType)}
+            />
+          </Section>
 
-        <TouchableOpacity style={[styles.recommendCard, pathMode === 'recommend' && styles.recommendCardActive]} onPress={applyRecommendation}>
-          <Text style={styles.recommendLabel}>Recommend for me</Text>
-          <Text style={styles.recommendText}>Outdoor distance missions are the strongest fit for reliable background continuity and ordered story updates.</Text>
+          <Section label="WHERE YOU WALK">
+            <Text style={styles.hint}>
+              You can switch this each session in the mission length picker.
+            </Text>
+            <Segment
+              options={[
+                { value: 'outside', label: 'OUTSIDE' },
+                { value: 'treadmill', label: 'TREADMILL' },
+              ]}
+              value={missionMode}
+              onChange={(v) => setMissionMode(v as MissionMode)}
+            />
+          </Section>
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.cta} onPress={finish} activeOpacity={0.85}>
+          <Text style={styles.ctaText}>FINISH SETUP</Text>
         </TouchableOpacity>
       </View>
-
-      <PrisonButton title="Finish Setup" onPress={finish} shimmer />
     </View>
   );
 }
 
+const Section: React.FC<{ label: string; children: React.ReactNode }> = ({
+  label,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionLabel}>{label}</Text>
+    {children}
+  </View>
+);
+
+interface SegmentProps {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}
+const Segment: React.FC<SegmentProps> = ({ options, value, onChange }) => (
+  <View style={styles.segmentRow}>
+    {options.map((opt) => (
+      <TouchableOpacity
+        key={opt.value}
+        onPress={() => onChange(opt.value)}
+        style={[
+          styles.segment,
+          value === opt.value ? styles.segmentActive : null,
+        ]}
+        activeOpacity={0.85}
+      >
+        <Text
+          style={[
+            styles.segmentText,
+            value === opt.value ? styles.segmentTextActive : null,
+          ]}
+        >
+          {opt.label}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 68,
-    paddingBottom: 32,
-  },
+  root: { flex: 1, backgroundColor: NW.bgInk },
+  scroll: { padding: 22, paddingTop: 56, paddingBottom: 16 },
   eyebrow: {
-    color: '#A4D3FF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2.1,
-    marginBottom: 12,
+    color: NW.blueLight,
+    fontSize: 11,
+    letterSpacing: 3,
+    fontWeight: '800',
+    marginBottom: 8,
   },
   title: {
-    color: '#F4F2EF',
-    fontSize: 28,
-    lineHeight: 34,
+    color: NW.text,
+    fontSize: 22,
     fontWeight: '800',
-    marginBottom: 20,
+    letterSpacing: 1,
+    lineHeight: 28,
+    marginBottom: 6,
   },
-  card: {
-    flex: 1,
-    borderRadius: 24,
-    padding: 18,
-    backgroundColor: 'rgba(16,19,27,0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+  subtitle: {
+    color: NW.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
     marginBottom: 18,
   },
-  sectionTitle: {
-    color: '#EDF0F8',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    marginTop: 8,
+  panel: {
+    backgroundColor: 'rgba(16,27,41,0.78)',
+    borderRadius: NW.radLg,
+    borderWidth: 1,
+    borderColor: NW.stroke,
+    padding: 16,
+  },
+  section: { marginBottom: 18 },
+  sectionLabel: {
+    color: NW.blueLight,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: '800',
+    marginBottom: 8,
   },
   segmentRow: {
     flexDirection: 'row',
-    gap: 10,
-    flexWrap: 'wrap',
-    marginBottom: 14,
+    backgroundColor: 'rgba(7,16,29,0.5)',
+    borderRadius: NW.radPill,
+    padding: 4,
   },
   segment: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(7,9,14,0.72)',
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: NW.radPill,
+    alignItems: 'center',
   },
-  segmentActive: {
-    borderColor: '#FF6A00',
-    backgroundColor: 'rgba(255,106,0,0.16)',
-  },
+  segmentActive: { backgroundColor: NW.blue },
   segmentText: {
-    color: '#C4CAD8',
-    fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 1,
+    color: NW.textMuted,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.6,
   },
-  segmentTextActive: {
-    color: '#FFF5E8',
-  },
-  recommendCard: {
-    marginTop: 10,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: 'rgba(12,15,20,0.76)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  recommendCardActive: {
-    borderColor: '#61E9FF',
-  },
-  recommendLabel: {
-    color: '#61E9FF',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+  segmentTextActive: { color: '#ffffff' },
+  hint: {
+    color: NW.textMuted,
+    fontSize: 11,
+    fontStyle: 'italic',
+    lineHeight: 15,
     marginBottom: 8,
   },
-  recommendText: {
-    color: '#CBD1DD',
-    lineHeight: 20,
+  footer: { paddingHorizontal: 22, paddingBottom: 24, paddingTop: 8 },
+  cta: {
+    backgroundColor: NW.blue,
+    borderRadius: 36,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: NW.blueLight,
+  },
+  ctaText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
 });
