@@ -1,9 +1,11 @@
+import { useFocusEffect } from '@react-navigation/native';
 // SettingsScreen — vertical-tab drill-in matching the style sheet mockup.
 // Left rail: GENERAL / AUDIO / NOTIFICATIONS / ACCOUNT. Right pane: rows of
 // settings (label + control). Bottom: RESET + SAVE CHANGES buttons.
 // Sits on top of the neighborhood background image with a dark panel chrome.
 
 import React from 'react';
+import { useMainMenuAudio } from '../../../components/MainMenuAudio';
 import {
   Image,
   ImageBackground,
@@ -67,6 +69,9 @@ const UnitsToggle: React.FC<UnitsToggleProps> = ({ value, onChange }) => (
 );
 
 export default function SettingsScreen() {
+  const { setVolume } = useMainMenuAudio();
+  useFocusEffect(React.useCallback(() => { setVolume(0.5); }, [setVolume]));
+
   const [active, setActive] = React.useState<TabKey>('GENERAL');
   const [prefs, setPrefs] = React.useState<UserPreferences>(defaultUserPreferences);
   const [vibration, setVibration] = React.useState(true);

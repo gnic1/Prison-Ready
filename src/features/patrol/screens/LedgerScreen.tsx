@@ -2,6 +2,7 @@
 // Translucent neighborhood bg, ANPC affinity pills, observation rows.
 
 import React from 'react';
+import { useMainMenuAudio } from '../../../components/MainMenuAudio';
 import {
   ImageBackground,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import NW from '../../../theme/uiTokens';
 import {
   LedgerService,
@@ -23,6 +24,9 @@ import {
 const BG = require('../../../../assets/backgrounds/main_background.png');
 
 export const LedgerScreen: React.FC = () => {
+  const { setVolume } = useMainMenuAudio();
+  useFocusEffect(React.useCallback(() => { setVolume(0.5); }, [setVolume]));
+
   const navigation = useNavigation<any>();
   const [state, setState] = React.useState<LedgerState>(LedgerService.get());
 

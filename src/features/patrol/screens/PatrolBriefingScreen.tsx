@@ -16,8 +16,9 @@ import {
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import NW from '../../../theme/uiTokens';
+import { useMainMenuAudio } from '../../../components/MainMenuAudio';
 import { findGraph } from '../content';
 import { PlayerProfileService } from '../services/playerProfileService';
 import { LedgerService } from '../services/ledgerService';
@@ -82,6 +83,8 @@ export const PatrolBriefingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const params = route.params as RouteParams;
+  const { setVolume } = useMainMenuAudio();
+  useFocusEffect(React.useCallback(() => { setVolume(0); }, [setVolume]));
   const graph = findGraph(params.graphId);
   const [busy, setBusy] = React.useState(false);
 

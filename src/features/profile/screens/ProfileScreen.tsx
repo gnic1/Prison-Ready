@@ -3,6 +3,7 @@
 // blue borders, gold accents). Reached from the fence button on Home.
 
 import React from 'react';
+import { useMainMenuAudio } from '../../../components/MainMenuAudio';
 import {
   SafeAreaView,
   ScrollView,
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { PlayerProfileService, PlayerProfile } from '../../patrol/services/playerProfileService';
 import { LedgerService } from '../../patrol/services/ledgerService';
 
@@ -29,6 +30,9 @@ const C = {
 };
 
 export const ProfileScreen: React.FC = () => {
+  const { setVolume } = useMainMenuAudio();
+  useFocusEffect(React.useCallback(() => { setVolume(0.5); }, [setVolume]));
+
   const navigation = useNavigation<any>();
   const [profile, setProfile] = React.useState<PlayerProfile>(PlayerProfileService.get());
   const [ledgerCount, setLedgerCount] = React.useState(0);

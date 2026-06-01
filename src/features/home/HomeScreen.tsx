@@ -12,9 +12,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import NW from '../../theme/uiTokens';
 import { graphsForSkin } from '../patrol/content';
+import { VideoBackground } from '../../components/VideoBackground';
+import { useMainMenuAudio } from '../../components/MainMenuAudio';
 import {
   AuthStorageService,
   defaultAuthState,
@@ -26,6 +28,7 @@ import {
 } from '../patrol/services/playerProfileService';
 
 const BG = require('../../../assets/backgrounds/main_background.png');
+const VIDEO = require('../../../assets/video/streetlight.mp4');
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -34,6 +37,13 @@ const HomeScreen: React.FC = () => {
     PlayerProfileService.get(),
   );
   const pulse = React.useRef(new Animated.Value(0)).current;
+  const { volume, setVolume } = useMainMenuAudio();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setVolume(1);
+    }, [setVolume]),
+  );
 
   React.useEffect(() => {
     AuthStorageService.loadState().then(setAuth).catch(() => {});
@@ -82,7 +92,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <ImageBackground source={BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <VideoBackground source={VIDEO} fallback={BG} volume={volume} />
       <View style={styles.bottom}>
         <Text style={styles.tagline}>EVERY STREET HAS SECRETS</Text>
 

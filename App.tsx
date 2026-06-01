@@ -1,5 +1,6 @@
 import React from 'react';
 import AppNavigator from './src/navigation';
+import { MainMenuAudioProvider } from './src/components/MainMenuAudio';
 import './src/features/missions/services/missionBackgroundTask';
 import { MissionNotificationService } from './src/features/missions/services/missionNotificationService';
 
@@ -10,5 +11,9 @@ export default function App() {
     });
   }, []);
 
-  return <AppNavigator />;
+  return (
+    <MainMenuAudioProvider>
+      <AppNavigator />
+    </MainMenuAudioProvider>
+  );
 }
