@@ -126,7 +126,7 @@ export const PatrolStanceScreen: React.FC = () => {
         <Text style={styles.eyebrow}>PRE-PATROL // STANCE</Text>
         <Text style={styles.title}>HOW ARE YOU WALKING TONIGHT?</Text>
         <Text style={styles.subtitle}>
-          Your stance nudges which beats fire and how skill checks lean.
+          Your selection will determine which popup missions you may get. Choose wisely.
         </Text>
 
         {stances.map((s) => {

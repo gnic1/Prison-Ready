@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 16,
     paddingTop: 18,
-    paddingBottom: 12,
+    paddingBottom: 36,
   },
   cta: {
     backgroundColor: NW.blue,

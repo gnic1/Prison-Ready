@@ -12,6 +12,8 @@ import { PlayerProfileService } from './playerProfileService';
 import { TTSService, type Persona } from './ttsService';
 import { AudioCueService } from './audioCueService';
 
+import { LedgerService } from './ledgerService';
+
 const KEY = 'dispatch.lastFiredDate.v1';
 
 export interface Dispatch {
@@ -22,6 +24,9 @@ export interface Dispatch {
   persona?: Persona;
   minDaysOff: number;
   maxDaysOff?: number;
+  /** If set, only fire when the player last patrolled with this stance flag
+   *  (e.g. 'stance.watchful'). Read from LedgerService.hasFlag. */
+  requiresStance?: string;
 }
 
 type Listener = (dispatch: Dispatch | null) => void;
@@ -72,7 +77,7 @@ class OffDayDispatchServiceImpl {
   /** Replay the latest dispatch via TTS (user tapped "hear again"). */
   replayLatest(): void {
     if (!this.latest) return;
-    TTSService.speak(this.latest.body, { persona: this.latest.persona ?? 'narrator' });
+    /* TTS removed: dispatches are visual-only to avoid surprise audio on main screen */
   }
 
   /** Player explicitly dismissed the surfaced card. Clears the publish channel. */
@@ -95,14 +100,15 @@ class OffDayDispatchServiceImpl {
       if (d.maxDaysOff !== undefined && daysSince >= d.maxDaysOff) return false;
       return true;
     });
-    if (candidates.length === 0) return null;
-    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const stanceFiltered = candidates.filter((d) => !d.requiresStance || LedgerService.hasFlag(d.requiresStance));
+    if (stanceFiltered.length === 0) return null;
+    const pick = stanceFiltered[Math.floor(Math.random() * stanceFiltered.length)];
     if (!pick) return null;
 
     this.lastFiredDate = today;
     AsyncStorage.setItem(KEY, today).catch(() => {});
     AudioCueService.play('beatArrived').catch(() => {});
-    TTSService.speak(pick.body, { persona: pick.persona ?? 'narrator' });
+    /* TTS removed: dispatches are visual-only to avoid surprise audio on main screen */
     this.latest = pick;
     this.emit();
     return pick;

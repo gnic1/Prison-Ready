@@ -2,6 +2,7 @@
 
 import React from 'react';
 import {
+  Modal,
   Alert,
   Platform,
   ScrollView,
@@ -262,23 +263,13 @@ export const PatrolHUDScreen: React.FC = () => {
     ? graph.nodes[session.currentNodeId]
     : undefined;
 
-  const handleAbort = () => {
-    Alert.alert(
-      'Abort patrol?',
-      'You\u2019ll keep the distance you\u2019ve walked, but the chapter will close unfinished.',
-      [
-        { text: 'Keep walking', style: 'cancel' },
-        {
-          text: 'Abort',
-          style: 'destructive',
-          onPress: async () => {
-            TTSService.cancelAll();
-            await patrolEngine.abort();
-            navigation.popToTop();
-          },
-        },
-      ],
-    );
+  const [showAbortModal, setShowAbortModal] = React.useState(false);
+  const handleAbort = () => setShowAbortModal(true);
+  const confirmAbort = async () => {
+    setShowAbortModal(false);
+    TTSService.cancelAll();
+    await patrolEngine.abort();
+    navigation.popToTop();
   };
 
   const handleVoiceTry = async () => {
@@ -437,6 +428,41 @@ export const PatrolHUDScreen: React.FC = () => {
             borderColor={borderColor}
           />
         ) : null}
+      
+      <Modal
+        visible={showAbortModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAbortModal(false)}
+      >
+        <View style={hudModalStyles.backdrop}>
+          <View style={hudModalStyles.card}>
+            <Text style={hudModalStyles.eyebrow}>END PATROL? //</Text>
+            <Text style={hudModalStyles.title}>Abort the walk?</Text>
+            <Text style={hudModalStyles.body}>
+              You’ll keep the distance you’ve walked, but the chapter
+              will close unfinished.
+            </Text>
+            <View style={hudModalStyles.row}>
+              <TouchableOpacity
+                style={hudModalStyles.btnKeep}
+                onPress={() => setShowAbortModal(false)}
+                activeOpacity={0.85}
+              >
+                <Text style={hudModalStyles.btnKeepLabel}>KEEP WALKING</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={hudModalStyles.btnAbort}
+                onPress={confirmAbort}
+                activeOpacity={0.85}
+              >
+                <Text style={hudModalStyles.btnAbortLabel}>ABORT</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       </SafeAreaView>
     </View>
   );
@@ -479,4 +505,74 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   errorBtnLabel: { color: '#EAE6DA', letterSpacing: 1 },
+});
+
+const hudModalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(3,5,12,0.78)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 22,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: 'rgba(16,27,41,0.97)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(138,191,255,0.45)',
+    padding: 22,
+  },
+  eyebrow: {
+    color: '#a8c8ff',
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  title: {
+    color: '#f3f6fb',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  body: {
+    color: '#a8b6c8',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 18,
+  },
+  row: { flexDirection: 'row', gap: 10 },
+  btnKeep: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(138,191,255,0.22)',
+    alignItems: 'center',
+  },
+  btnKeepLabel: {
+    color: '#f3f6fb',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.6,
+  },
+  btnAbort: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#ff3b30',
+    borderWidth: 1,
+    borderColor: '#ff6259',
+    alignItems: 'center',
+  },
+  btnAbortLabel: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.6,
+  },
 });

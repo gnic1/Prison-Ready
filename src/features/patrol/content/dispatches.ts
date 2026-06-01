@@ -86,4 +86,30 @@ export const dispatches: Dispatch[] = [
     body: 'Three phones on your block reported a compass drift of six degrees at the same moment last night. Then they recovered. Nothing on the news.',
     minDaysOff: 3,
   },
+
+  // ----- Neighborhood Watch · stance-gated side quests -----
+  {
+    skin: 'neighborhood',
+    eyebrow: 'WORD ON THE BLOCK //',
+    heading: 'Mrs. Caldwell wants a second walker tonight.',
+    body: 'You walked routine last time. People noticed. Mrs. Caldwell left a note in your mailbox asking if you would do the loop with her tomorrow at the same hour.',
+    minDaysOff: 1,
+    requiresStance: 'stance.routine',
+  },
+  {
+    skin: 'neighborhood',
+    eyebrow: 'CASE NOTE //',
+    heading: 'Janelle wants what you saw at the Petrovs’.',
+    body: 'You walked watchful. Janelle texted twice: she wants the exact angle of the head behind the Petrovs’ blinds before she logs it with the second walker.',
+    minDaysOff: 1,
+    requiresStance: 'stance.watchful',
+  },
+  {
+    skin: 'neighborhood',
+    eyebrow: 'DOORSTEP //',
+    heading: 'Mr. Sanderson left coffee on your porch.',
+    body: 'You walked visible. Mr. Sanderson saw you. There is a thermos of coffee on your front step this morning and a note: "Walk with us Saturday."',
+    minDaysOff: 1,
+    requiresStance: 'stance.visible',
+  },
 ];
