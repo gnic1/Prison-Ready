@@ -23,7 +23,8 @@ import { findGraph } from '../content';
 import { PlayerProfileService } from '../services/playerProfileService';
 import { LedgerService } from '../services/ledgerService';
 import { graphsForSkin } from '../content';
-import { BriefingAudioService } from '../services/briefingAudioService';
+import { ChapterAudioPlayer, hasChapterAudio, loadChapterAudio } from '../components/ChapterAudioPlayer';
+import { TTSService } from '../services/ttsService';
 
 const BG = require('../../../../assets/backgrounds/main_background.png');
 
@@ -167,9 +168,7 @@ export const PatrolBriefingScreen: React.FC = () => {
             <View style={styles.summaryBlock}>
               <View style={styles.briefingHeader}>
                 <Text style={styles.summaryHeading}>BRIEFING</Text>
-                {BriefingAudioService.hasAudioFor(graph.id) ? (
-                  <BriefingPlayButton graphId={graph.id} />
-                ) : null}
+                <BriefingPlayButton graphId={graph.id} briefing={graph.briefing} />
               </View>
               {graph.briefing.map((line, idx) => (
                 <Text key={idx} style={styles.summaryLine}>
@@ -216,26 +215,47 @@ export const PatrolBriefingScreen: React.FC = () => {
   );
 };
 
-const BriefingPlayButton: React.FC<{ graphId: string }> = ({ graphId }) => {
+const BriefingPlayButton: React.FC<{ graphId: string; briefing: string[] }> = ({ graphId, briefing }) => {
   const [playing, setPlaying] = React.useState(false);
+  const usesAudio = hasChapterAudio(graphId);
+  const source = React.useMemo(() => (usesAudio ? loadChapterAudio(graphId) : null), [graphId, usesAudio]);
+
+  // Cancel any TTS the moment this screen unmounts so audio can't leak forward.
   React.useEffect(() => {
     return () => {
-      BriefingAudioService.stop().catch(() => {});
+      if (!usesAudio) {
+        try { TTSService.cancelAll(); } catch {}
+      }
     };
-  }, []);
-  const toggle = async () => {
+  }, [usesAudio]);
+
+  const toggle = () => {
     if (playing) {
-      await BriefingAudioService.stop();
-      setPlaying(false);
+      if (usesAudio) {
+        setPlaying(false);
+      } else {
+        try { TTSService.cancelAll(); } catch {}
+        setPlaying(false);
+      }
     } else {
-      await BriefingAudioService.play(graphId);
-      setPlaying(true);
+      if (usesAudio) {
+        setPlaying(true);
+      } else {
+        TTSService.speakParagraphs(briefing, { persona: 'narrator' }).then(() => setPlaying(false));
+        setPlaying(true);
+      }
     }
   };
+
   return (
-    <TouchableOpacity onPress={toggle} style={styles.audioBtn} activeOpacity={0.85}>
-      <Text style={styles.audioBtnText}>{playing ? '◼ STOP' : '▶ PLAY'}</Text>
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity onPress={toggle} style={styles.audioBtn} activeOpacity={0.85}>
+        <Text style={styles.audioBtnText}>{playing ? '◼ STOP' : '▶ PLAY'}</Text>
+      </TouchableOpacity>
+      {usesAudio && source ? (
+        <ChapterAudioPlayer source={source} shouldPlay={playing} onEnded={() => setPlaying(false)} />
+      ) : null}
+    </>
   );
 };
 
