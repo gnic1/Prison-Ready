@@ -43,7 +43,7 @@ export default function AccountBasicsScreen() {
           return;
         }
         if (!result.state.onboardingCompleted) {
-          navigation.navigate('ThemeSelection');
+          navigation.navigate('MissionPreferences');
         }
         return;
       }
@@ -58,7 +58,7 @@ export default function AccountBasicsScreen() {
         Alert.alert('Create Account', result.message);
         return;
       }
-      navigation.navigate('ThemeSelection');
+      navigation.navigate('MissionPreferences');
     } finally {
       setSubmitting(false);
     }

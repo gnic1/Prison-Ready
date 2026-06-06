@@ -37,7 +37,7 @@ const STORAGE_KEY = 'prison_ready_auth_state_v1';
 export const defaultAuthState: AuthState = {
   mode: 'signed_out',
   onboardingCompleted: false,
-  selectedTheme: 'prison',
+  selectedTheme: 'neighborhood',
   displayName: 'Guest Agent',
   ageConfirmed: false,
   preferredMissionStyle: 'balanced',
@@ -113,6 +113,13 @@ async function getPayload(): Promise<AuthStoragePayload> {
 export const AuthStorageService = {
   async loadState(): Promise<AuthState> {
     const payload = await getPayload();
+    // Lock the app to Neighborhood Watch for now. If a previously stored
+    // state has any other skin selected, snap it back here so the patrol
+    // chooser only ever sees neighborhood chapters.
+    if (payload.activeState.selectedTheme !== 'neighborhood') {
+      payload.activeState = { ...payload.activeState, selectedTheme: 'neighborhood' };
+      await persist(payload);
+    }
     return payload.activeState;
   },
 

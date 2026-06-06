@@ -40,12 +40,12 @@ const Row: React.FC<RowProps> = ({ label, control }) => (
 );
 
 interface UnitsToggleProps {
-  value: 'imperial' | 'metric';
-  onChange: (v: 'imperial' | 'metric') => void;
+  value: 'miles' | 'kilometers';
+  onChange: (v: 'miles' | 'kilometers') => void;
 }
 const UnitsToggle: React.FC<UnitsToggleProps> = ({ value, onChange }) => (
   <View style={styles.unitsWrap}>
-    {(['imperial', 'metric'] as const).map((u) => (
+    {(['miles', 'kilometers'] as const).map((u) => (
       <TouchableOpacity
         key={u}
         onPress={() => onChange(u)}
@@ -76,7 +76,7 @@ export default function SettingsScreen() {
   const [prefs, setPrefs] = React.useState<UserPreferences>(defaultUserPreferences);
   const [vibration, setVibration] = React.useState(true);
   const [tutorialHints, setTutorialHints] = React.useState(true);
-  const [units, setUnits] = React.useState<'imperial' | 'metric'>('imperial');
+  const [units, setUnits] = React.useState<'miles' | 'kilometers'>('miles');
   const [cloudSave, setCloudSave] = React.useState(true);
   const [pushNotifs, setPushNotifs] = React.useState(true);
   const [sound, setSound] = React.useState(true);
@@ -91,7 +91,7 @@ export default function SettingsScreen() {
   const onReset = () => {
     setVibration(true);
     setTutorialHints(true);
-    setUnits('imperial');
+    setUnits('miles');
     setCloudSave(true);
     setPushNotifs(true);
     setSound(true);

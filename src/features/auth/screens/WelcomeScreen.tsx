@@ -31,7 +31,7 @@ export default function WelcomeScreen() {
 
   const handleGuest = async () => {
     await AuthStorageService.continueAsGuest();
-    navigation.navigate('ThemeSelection');
+    navigation.navigate('MissionPreferences');
   };
 
   return (
